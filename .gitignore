@@ -13,3 +13,9 @@ bazel-*
 out
 docs/html
 MODULE.bazel.lock
+
+*.vcxproj
+*.vcxproj.filters
+
+/bin
+/bin-int
