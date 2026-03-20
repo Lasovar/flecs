@@ -1,5 +1,53 @@
 #include <core.h>
 
+void Commands_is_deferred(void) {
+    ecs_world_t *world = ecs_mini();
+
+    test_bool(false, ecs_is_deferred(world));
+
+    ecs_defer_begin(world);
+
+    test_bool(true, ecs_is_deferred(world));
+
+    ecs_defer_suspend(world);
+
+    test_bool(false, ecs_is_deferred(world));
+
+    ecs_defer_resume(world);
+
+    test_bool(true, ecs_is_deferred(world));
+
+    ecs_defer_end(world);
+
+    test_bool(false, ecs_is_deferred(world));
+
+    ecs_fini(world);
+}
+
+void Commands_is_defer_suspended(void) {
+    ecs_world_t *world = ecs_mini();
+
+    test_bool(false, ecs_is_defer_suspended(world));
+
+    ecs_defer_begin(world);
+
+    test_bool(false, ecs_is_defer_suspended(world));
+
+    ecs_defer_suspend(world);
+
+    test_bool(true, ecs_is_defer_suspended(world));
+
+    ecs_defer_resume(world);
+
+    test_bool(false, ecs_is_defer_suspended(world));
+
+    ecs_defer_end(world);
+
+    test_bool(false, ecs_is_defer_suspended(world));
+
+    ecs_fini(world);
+}
+
 void Commands_defer_new(void) {
     ecs_world_t *world = ecs_mini();
 
@@ -5188,6 +5236,129 @@ void Commands_on_replace_w_set_batched_existing_twice(void) {
         test_assert(v != NULL);
         test_int(v->x, 1); test_int(v->y, 2);
     }
+
+    ecs_fini(world);
+}
+
+void Commands_set_existing_after_remove(void) {
+    ecs_world_t *world = ecs_mini();
+
+    ECS_COMPONENT(world, Position);
+
+    ecs_entity_t e = ecs_new(world);
+    ecs_set(world, e, Position, {10, 20});
+
+    ecs_defer_begin(world);
+        ecs_remove(world, e, EcsParent);
+        ecs_set(world, e, Position, {30, 40});
+    ecs_defer_end(world);
+
+    const Position *ptr = ecs_get(world, e, Position);
+    test_assert(ptr != NULL);
+    test_int(ptr->x, 30);
+    test_int(ptr->y, 40);
+
+    ecs_fini(world);
+}
+
+void Commands_set_existing_after_remove_move_table(void) {
+    ecs_world_t *world = ecs_mini();
+
+    ECS_COMPONENT(world, Position);
+    ECS_TAG(world, Foo);
+
+    ecs_entity_t e = ecs_new(world);
+    ecs_set(world, e, Position, {10, 20});
+
+    ecs_defer_begin(world);
+        ecs_add(world, e, Foo);
+        ecs_remove(world, e, Position);
+        ecs_set(world, e, Position, {30, 40});
+    ecs_defer_end(world);
+
+    const Position *ptr = ecs_get(world, e, Position);
+    test_assert(ptr != NULL);
+    test_int(ptr->x, 30);
+    test_int(ptr->y, 40);
+
+    ecs_fini(world);
+}
+
+void Commands_set_existing_after_remove_w_is_a(void) {
+    ecs_world_t *world = ecs_mini();
+
+    ECS_COMPONENT(world, Position);
+
+    ecs_entity_t p = ecs_new_w_id(world, EcsPrefab);
+    ecs_entity_t e = ecs_new(world);
+
+    ecs_add_pair(world, e, EcsIsA, p);
+    ecs_set(world, e, Position, {10, 20});
+
+    ecs_defer_begin(world);
+        ecs_remove(world, e, EcsParent);
+        ecs_set(world, e, Position, {30, 40});
+    ecs_defer_end(world);
+
+    const Position *ptr = ecs_get(world, e, Position);
+    test_assert(ptr != NULL);
+    test_int(ptr->x, 30);
+    test_int(ptr->y, 40);
+
+    ecs_fini(world);
+}
+
+void Commands_set_existing_after_remove_w_is_a_move_table(void) {
+    ecs_world_t *world = ecs_mini();
+
+    ECS_COMPONENT(world, Position);
+    ECS_TAG(world, Foo);
+
+    ecs_entity_t p = ecs_new_w_id(world, EcsPrefab);
+    ecs_entity_t e = ecs_new(world);
+
+    ecs_add_pair(world, e, EcsIsA, p);
+    ecs_set(world, e, Position, {10, 20});
+
+    ecs_defer_begin(world);
+        ecs_add(world, e, Foo);
+        ecs_remove(world, e, Position);
+        ecs_set(world, e, Position, {30, 40});
+    ecs_defer_end(world);
+
+    const Position *ptr = ecs_get(world, e, Position);
+    test_assert(ptr != NULL);
+    test_int(ptr->x, 30);
+    test_int(ptr->y, 40);
+
+    ecs_fini(world);
+}
+
+void Commands_set_existing_after_remove_2_stages(void) {
+    ecs_world_t *world = ecs_mini();
+    ecs_set_stage_count(world, 2);
+
+    ecs_world_t *stage_a = ecs_get_stage(world, 0);
+    ecs_world_t *stage_b = ecs_get_stage(world, 1);
+
+    ECS_COMPONENT(world, Position);
+    ECS_TAG(world, Foo);
+
+    ecs_entity_t e = ecs_new(world);
+    ecs_set(world, e, Position, {10, 20});
+
+    ecs_readonly_begin(world, false);
+        ecs_add(stage_a, e, Foo);
+        ecs_remove(stage_a, e, Position);
+        ecs_set(stage_b, e, Position, {30, 40});
+    ecs_readonly_end(world);
+
+    test_assert(ecs_has(world, e, Foo));
+
+    const Position *ptr = ecs_get(world, e, Position);
+    test_assert(ptr != NULL);
+    test_int(ptr->x, 30);
+    test_int(ptr->y, 40);
 
     ecs_fini(world);
 }

@@ -12,7 +12,7 @@
 /* The number of table versions to split tables across */
 #define ECS_TABLE_VERSION_ARRAY_SIZE (ECS_TABLE_VERSION_ARRAY_BITMASK + 1)
 
-/* World level allocators are for operations that are not multithreaded */
+/* World-level allocators are for operations that are not multithreaded */
 typedef struct ecs_world_allocators_t {
     ecs_block_allocator_t graph_edge_lo;
     ecs_block_allocator_t graph_edge;
@@ -23,6 +23,9 @@ typedef struct ecs_world_allocators_t {
 
     /* Temporary vectors used for creating table diff id sequences */
     ecs_table_diff_builder_t diff_builder;
+
+    /* Temporary vector for tree spawner */
+    ecs_vec_t tree_spawner;
 } ecs_world_allocators_t;
 
 /* Component monitor */
@@ -91,11 +94,11 @@ struct ecs_world_t {
 #ifdef FLECS_DEBUG
     /* Locked components. When a component is queried for, it is no longer 
      * possible to change traits and/or to delete the component. */
-    ecs_map_t locked_components;     /* map<id_t, int64_t> */
+    ecs_map_t locked_components;     /* map<id_t, int32_t> */
 
-    /* Locked entities. This is used for queried for pair targets. It is 
+    /* Locked entities. This is used for queried pair targets. It is
      * possible to add traits, but entities cannot be deleted. */
-    ecs_map_t locked_entities;     /* map<id_t, int64_t> */
+    ecs_map_t locked_entities;     /* map<id_t, int32_t> */
 #endif
 
     /* -- Cached handle to id records -- */
@@ -121,18 +124,11 @@ struct ecs_world_t {
      * cached pointer is still valid. */
     uint32_t table_version[ECS_TABLE_VERSION_ARRAY_SIZE];
 
-    /* Same as table_version, but only increases after the column pointers of
-     * a table change. */
-    uint32_t table_column_version[ECS_TABLE_VERSION_ARRAY_SIZE];
-
     /* Array for checking if components can be looked up trivially */
     ecs_flags8_t non_trivial_lookup[FLECS_HI_COMPONENT_ID];
 
     /* Array for checking if components can be set trivially */
     ecs_flags8_t non_trivial_set[FLECS_HI_COMPONENT_ID];
-
-    /* Is entity range checking enabled? */
-    bool range_check_enabled;
 
     /* --  Data storage -- */
     ecs_store_t store;
@@ -154,9 +150,15 @@ struct ecs_world_t {
     /* -- Component ids -- */
     ecs_vec_t component_ids;         /* World local component ids */
 
+    /* Index of prefab children in ordered children vector. Used by ecs_get_target. */
+    ecs_map_t prefab_child_indices;
+
+    /* Is entity range checking enabled? */
+    bool range_check_enabled;
+
     /* Internal callback for command inspection. Only one callback can be set at
-     * a time. After assignment the action will become active at the start of 
-     * the next frame, set by ecs_frame_begin, and will be reset by 
+     * a time. After assignment, the action will become active at the start of
+     * the next frame, set by ecs_frame_begin, and will be reset by
      * ecs_frame_end. */
     ecs_on_commands_action_t on_commands;
     ecs_on_commands_action_t on_commands_active;
@@ -275,18 +277,8 @@ void flecs_increment_table_version(
     ecs_world_t *world,
     ecs_table_t *table);
 
-/* Same as flecs_increment_table_version, but for column version. */
-void flecs_increment_table_column_version(
-    ecs_world_t *world,
-    ecs_table_t *table);
-
 /* Get table version. */
 uint32_t flecs_get_table_version_fast(
-    const ecs_world_t *world,
-    const uint64_t table_id);
-
-/* Get table version for column pointer validation. */
-uint32_t flecs_get_table_column_version(
     const ecs_world_t *world,
     const uint64_t table_id);
 
@@ -319,7 +311,7 @@ bool flecs_component_is_delete_locked(
 #define flecs_component_is_delete_locked(world, component) (false)
 #endif
 
-/* Convenience macro's for world allocator */
+/* Convenience macros for world allocator */
 #define flecs_walloc(world, size)\
     flecs_alloc(&world->allocator, size)
 #define flecs_walloc_t(world, T)\

@@ -1,5 +1,5 @@
 /**
- * @file addons/script/expr_ast.c
+ * @file addons/script/expr/ast.c
  * @brief Script expression AST implementation.
  */
 
@@ -55,6 +55,20 @@ ecs_expr_variable_t* flecs_expr_variable_from(
     return result;
 }
 
+ecs_expr_member_t* flecs_expr_member_from(
+    ecs_script_t *script,
+    ecs_expr_node_t *node,
+    const char *name)
+{
+    ecs_expr_member_t *result = flecs_calloc_t(
+        &flecs_script_impl(script)->allocator, ecs_expr_member_t);
+    result->node.kind = EcsExprMember;
+    result->node.pos = node->pos;
+    result->left = node;
+    result->member_name =name;
+    return result;
+}
+
 ecs_expr_value_node_t* flecs_expr_bool(
     ecs_parser_t *parser,
     bool value)
@@ -79,6 +93,8 @@ ecs_expr_value_node_t* flecs_expr_char(
         char ch = 0;
         const char *ptr = flecs_chrparse(value, &ch);
         if(!ptr) {
+            flecs_free_t(
+                &parser->script->allocator, ecs_expr_value_node_t, result);
             return NULL;
         }
         result->storage.char_ = ch;
@@ -136,6 +152,7 @@ ecs_expr_value_node_t* flecs_expr_string(
     result->node.type = ecs_id(ecs_string_t);
 
     if (!flecs_string_escape(str)) {
+        flecs_free_t(&parser->script->allocator, ecs_expr_value_node_t, result);
         return NULL;
     }
 
@@ -273,7 +290,7 @@ bool flecs_expr_explicit_cast_allowed(
     ecs_assert(from_type != NULL, ECS_INTERNAL_ERROR, NULL);
     ecs_assert(to_type != NULL, ECS_INTERNAL_ERROR, NULL);
 
-    /* Treat opaque types asthe types that they're pretending to be*/
+    /* Treat opaque types as the types that they're pretending to be */
     if (from_type->kind == EcsOpaqueType) {
         const EcsOpaque *o = ecs_get(world, from, EcsOpaque);
         ecs_assert(o != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -312,12 +329,12 @@ bool flecs_expr_explicit_cast_allowed(
         return false;
     }
 
-    /* Anything can be casted to a number */
+    /* Anything can be cast to a number */
     if (flecs_expr_is_type_number(to)) {
         return true;
     }
 
-    /* Anything can be casted to a number */
+    /* Anything can be cast to a string */
     if (to == ecs_id(ecs_string_t)) {
         return true;
     }

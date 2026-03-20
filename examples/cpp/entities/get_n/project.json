@@ -1,10 +1,11 @@
 {
-    "id": "custom_runner",
+    "id": "get_n",
     "type": "application",
     "value": {
         "use": [
             "flecs"
         ],
-        "public": false
+        "public": false,
+        "language": "c++"
     }
 }

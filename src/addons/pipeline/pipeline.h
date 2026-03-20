@@ -15,8 +15,8 @@ typedef struct ecs_pipeline_op_t {
     int32_t count;              /* Number of systems to run before next op */
     double time_spent;          /* Time spent merging commands for sync point */
     int64_t commands_enqueued;  /* Number of commands enqueued for sync point */
-    bool multi_threaded;        /* Whether systems can be ran multi threaded */
-    bool immediate;           /* Whether systems are staged or not */
+    bool multi_threaded;        /* Whether systems can be run multi-threaded */
+    bool immediate;           /* Whether systems run in immediate mode */
 } ecs_pipeline_op_t;
 
 struct ecs_pipeline_state_t {
@@ -25,8 +25,7 @@ struct ecs_pipeline_state_t {
     ecs_vec_t systems;          /* Vector with system ids */
 
     ecs_entity_t last_system;   /* Last system ran by pipeline */
-    ecs_component_record_t *cr_inactive; /* Cached record for quick inactive test */
-    int32_t match_count;        /* Used to track of rebuild is necessary */
+    int32_t match_count;        /* Used to track if rebuild is necessary */
     int32_t rebuild_count;      /* Number of pipeline rebuilds */
     ecs_iter_t *iters;          /* Iterator for worker(s) */
     int32_t iter_count;
@@ -35,7 +34,7 @@ struct ecs_pipeline_state_t {
     ecs_pipeline_op_t *cur_op;  /* Current pipeline op */
     int32_t cur_i;              /* Index in current result */
     int32_t ran_since_merge;    /* Index in current op */
-    bool immediate;           /* Is pipeline in readonly mode */
+    bool immediate;           /* Is pipeline in immediate mode */
 };
 
 typedef struct EcsPipeline {

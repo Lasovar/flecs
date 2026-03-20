@@ -55,7 +55,7 @@ ecs_entity_t ecs_import(
 
         /* Lookup module entity (must be registered by module) */
         e = ecs_lookup(world, module_name);
-        ecs_check(e != 0, ECS_MODULE_UNDEFINED, module_name);
+        ecs_check(e != 0, ECS_MODULE_UNDEFINED, "%s", module_name);
 
         ecs_log_pop();
     }
@@ -171,7 +171,6 @@ ecs_entity_t ecs_import_from_library(
             import_func, library_name, module);
     }
 
-    /* Do not free id, as it will be stored as the component identifier */
     ecs_entity_t result = ecs_import(world, action, module);
 
     if (import_func != module_name) {
@@ -214,7 +213,6 @@ ecs_entity_t ecs_module_init(
     }
     
     ecs_add_id(world, e, EcsModule);
-    ecs_add_id(world, e, EcsSingleton);
 
     ecs_component_desc_t private_desc = *desc;
     private_desc.entity = e;

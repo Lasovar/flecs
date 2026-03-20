@@ -29,7 +29,11 @@ struct ecs_script_impl_t {
 
 typedef struct ecs_function_calldata_t {
     ecs_entity_t function;
-    ecs_function_callback_t callback;
+    struct {
+        ecs_function_callback_t callback;
+        ecs_vector_function_callback_t vector_callback;
+    } is;
+    int32_t vector_elem_count;
     void *ctx;
 } ecs_function_calldata_t;
 
@@ -93,6 +97,20 @@ int ecs_script_ast_node_to_buf(
 
 void ecs_script_runtime_clear(
     ecs_script_runtime_t *r);
+
+int flecs_script_apply_annot(
+    ecs_script_eval_visitor_t *v,
+    ecs_script_entity_t *node,
+    ecs_script_annot_t *annot);
+
+/* Script functions */
+double flecs_lerp(
+    double a, 
+    double b,
+    double t);
+
+void FlecsScriptMathPerlinImport(
+    ecs_world_t *world);
 
 #endif // FLECS_SCRIPT
 #endif // FLECS_SCRIPT_PRIVATE_H

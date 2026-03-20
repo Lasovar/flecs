@@ -187,26 +187,28 @@ const char* flecs_path_elem(
     ecs_size_t size = size_out ? *size_out : 0;
 
     for (ptr = path; (ch = *ptr); ptr ++) {
+        bool escaped = false;
         if (ch == '<') {
             template_nesting ++;
         } else if (ch == '>') {
             template_nesting --;
         } else if (ch == '\\') {
             ptr ++;
-            if (buffer) {
-                buffer[pos] = ptr[0];
+            ch = ptr[0];
+            if (!ch) {
+                break;
             }
-            pos ++;
-            continue;
+            escaped = true;
         }
 
-        ecs_check(template_nesting >= 0, ECS_INVALID_PARAMETER, path);
+        ecs_check(template_nesting >= 0, ECS_INVALID_PARAMETER, "%s", path);
 
-        if (!template_nesting && flecs_is_sep(&ptr, sep)) {
+        if (!escaped && !template_nesting && flecs_is_sep(&ptr, sep)) {
             break;
         }
 
         if (buffer) {
+            ecs_assert(size > 0, ECS_INTERNAL_ERROR, NULL);
             if (pos >= (size - 1)) {
                 if (size == ECS_NAME_BUFFER_LENGTH) { /* stack buffer */
                     char *new_buffer = ecs_os_malloc(size * 2 + 1);
@@ -322,13 +324,13 @@ void flecs_bootstrap_entity_name(
     ecs_world_t *world) 
 {
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = {
             .id = ecs_pair(ecs_id(EcsIdentifier), EcsSymbol)
         },
         .callback = flecs_on_set_symbol,
         .events = {EcsOnSet},
-        .yield_existing = true
+        .yield_existing = true,
+        .global_observer = true
     });
 }
 
@@ -345,6 +347,8 @@ void ecs_on_set(EcsIdentifier)(
     ecs_entity_t kind = ECS_PAIR_SECOND(evt_id); /* Name, Symbol, Alias */
     ecs_id_t pair = ecs_childof(0);
     ecs_hashmap_t *index = NULL;
+    bool has_parent = false;
+    EcsParent *parents = NULL;
 
     if (kind == EcsSymbol) {
         index = &world->symbols;
@@ -352,14 +356,20 @@ void ecs_on_set(EcsIdentifier)(
         index = &world->aliases;
     } else if (kind == EcsName) {
         ecs_assert(it->table != NULL, ECS_INTERNAL_ERROR, NULL);
-        ecs_search(world, it->table, ecs_childof(EcsWildcard), &pair);
-        ecs_assert(pair != 0, ECS_INTERNAL_ERROR, NULL);
 
-        ecs_component_record_t *cr = flecs_components_get(world, pair);
-        if (evt == EcsOnSet) {
-            index = flecs_component_name_index_ensure(world, cr);
+        if (it->table->flags & EcsTableHasParent) {
+            has_parent = true;
+            parents = ecs_table_get(world, it->table, EcsParent, it->offset);
         } else {
-            index = flecs_component_name_index_get(world, cr);
+            ecs_search(world, it->table, ecs_childof(EcsWildcard), &pair);
+            ecs_assert(pair != 0, ECS_INTERNAL_ERROR, NULL);
+
+            ecs_component_record_t *cr = flecs_components_get(world, pair);
+            if (evt == EcsOnSet) {
+                index = flecs_component_name_index_ensure(world, cr);
+            } else {
+                index = flecs_component_name_index_get(world, cr);
+            }
         }
     }
 
@@ -385,6 +395,13 @@ void ecs_on_set(EcsIdentifier)(
                 (it->entities[i] != EcsFlecsCore),
                 ECS_INVALID_OPERATION,
                     "cannot rename flecs.core module");
+
+            if (has_parent) {
+                ecs_component_record_t *cr = flecs_components_get(
+                    world, ecs_childof(parents[i].value));
+                ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
+                index = flecs_component_name_index_ensure(world, cr);
+            }
         }
 
         if (cur->index && cur->index != index) {
@@ -468,8 +485,8 @@ void flecs_reparent_name_index_intern(
 
 void flecs_reparent_name_index(
     ecs_world_t *world,
+    ecs_table_t *dst,
     ecs_table_t *src, 
-    ecs_table_t *dst, 
     int32_t offset,
     int32_t count) 
 {
@@ -485,18 +502,9 @@ void flecs_reparent_name_index(
         src = &world->store.root;
     }
 
-    ecs_pair_record_t *src_pair = src->_->childof_r;
-    ecs_pair_record_t *dst_pair = dst->_->childof_r;
-
-    /* Reparenting should only get triggered when an entity changed parent */
-    ecs_assert(src_pair != dst_pair, ECS_INTERNAL_ERROR, NULL);
-
-    /* Even when an entity has no parent, it's still in the root scope */
-    ecs_assert(src_pair != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_assert(dst_pair != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    ecs_hashmap_t *src_index = src_pair->name_index;
-    ecs_hashmap_t *dst_index = dst_pair->name_index;
+    ecs_hashmap_t *src_index = flecs_table_get_name_index(world, src);
+    ecs_hashmap_t *dst_index = flecs_table_get_name_index(world, dst);
+    ecs_assert(src_index != dst_index, ECS_INTERNAL_ERROR, NULL);
     if ((!src_index && !dst_index)) {
         return;
     }
@@ -528,9 +536,9 @@ void flecs_unparent_name_index(
         return;
     }
 
-    ecs_assert(src->_->childof_r != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_hashmap_t *src_index = src->_->childof_r->name_index;
-    ecs_hashmap_t *dst_index = dst ? dst->_->childof_r->name_index : NULL;
+    ecs_hashmap_t *src_index = flecs_table_get_name_index(world, src);
+    ecs_hashmap_t *dst_index = dst ? flecs_table_get_name_index(world, dst) : NULL;
+    ecs_assert(src_index != NULL, ECS_INTERNAL_ERROR, NULL);
 
     EcsIdentifier *names = ecs_table_get_pair(world, 
         src, EcsIdentifier, EcsName, offset);
@@ -842,9 +850,6 @@ void flecs_add_path(
         ecs_add_pair(world, entity, EcsChildOf, parent);
     }
 
-    ecs_assert(name[0] != '#', ECS_INVALID_PARAMETER, 
-        "path should not contain identifier with #");
-
     ecs_set_name(world, entity, name);
 
     if (defer_suspend) {
@@ -1017,7 +1022,6 @@ const char* ecs_get_symbol(
     }
 }
 
-static
 ecs_entity_t flecs_set_identifier(
     ecs_world_t *world,
     ecs_stage_t *stage,

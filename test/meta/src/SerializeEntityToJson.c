@@ -1084,7 +1084,7 @@ void SerializeEntityToJson_serialize_from_core(void) {
 
     char *json = ecs_entity_to_json(world, EcsWorld, NULL);
     test_assert(json != NULL);
-    test_json(json, "{\"parent\":\"flecs.core\", \"name\":\"World\", \"components\":{\"(flecs.core.Identifier,flecs.core.Symbol)\":{\"value\":\"flecs.core.World\"}, \"(flecs.doc.Description,flecs.doc.Brief)\":{\"value\":\"Entity associated with world\"}}}");
+    test_json(json, "{\"parent\":\"flecs.core\", \"name\":\"World\"}");
     ecs_os_free(json);
 
     ecs_fini(world);
@@ -1594,7 +1594,7 @@ void SerializeEntityToJson_serialize_id_recycled(void) {
 
     ecs_entity_to_json_desc_t desc = ECS_ENTITY_TO_JSON_INIT;
     desc.serialize_entity_id = true;
-    char *expect = flecs_asprintf("{\"name\":\"Foo\", \"id\":%u}",
+    char *expect = flecs_asprintf("{\"name\":\"Foo\", \"id\":%u, \"version\":1}",
         (uint32_t)e);
     char *json = ecs_entity_to_json(world, e, &desc);
     test_assert(json != NULL);
@@ -2323,3 +2323,35 @@ void SerializeEntityToJson_serialize_w_partial_blacklist(void) {
     ecs_fini(world);
 }
 
+void SerializeEntityToJson_serialize_value_pair(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_TAG(world, Rel);
+
+    ecs_entity_t e = ecs_entity(world, { .name = "e" });
+    ecs_add_id(world, e, ecs_value_pair(Rel, 1));
+
+    ecs_entity_to_json_desc_t desc = ECS_ENTITY_TO_JSON_INIT;
+    char *json = ecs_entity_to_json(world, e, &desc);
+    test_assert(json != NULL);
+    test_json(json, "{\"name\":\"e\", \"pairs\":{\"Rel\":\"@1\"}}");
+    ecs_os_free(json);
+
+    ecs_fini(world);
+}
+
+void SerializeEntityToJson_serialize_parent_component(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t p = ecs_entity(world, { .name = "p" });
+    ecs_entity_t e = ecs_entity(world, { .name = "e" });
+    ecs_set(world, e, EcsParent, {p});
+
+    ecs_entity_to_json_desc_t desc = ECS_ENTITY_TO_JSON_INIT;
+    char *json = ecs_entity_to_json(world, e, &desc);
+    test_assert(json != NULL);
+    test_json(json, "{\"parent\":\"p\", \"name\":\"e\", \"pairs\":{\"flecs.core.ParentDepth\":\"@1\"}, \"components\":{\"flecs.core.Parent\":{\"value\":\"p\"}}}");
+    ecs_os_free(json);
+
+    ecs_fini(world);
+}

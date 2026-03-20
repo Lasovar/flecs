@@ -189,7 +189,9 @@
                 "register_run_after_callback",
                 "register_callback_after_run_ctx",
                 "register_run_after_callback_ctx",
-                "run_w_query_next"
+                "set_group",
+                "run_w_query_next",
+                "missing_callback"
             ]
         }, {
             "id": "SystemPeriodic",
@@ -515,6 +517,10 @@
                 "named_query",
                 "tables",
                 "components",
+                "type_info_non_existing_entity",
+                "type_info_not_component",
+                "type_info_component_without_reflection",
+                "type_info_component_with_reflection",
                 "request_commands",
                 "request_commands_2_syncs",
                 "request_commands_no_frames",
@@ -527,7 +533,12 @@
                 "get_pipeline_stats_after_delete_system",
                 "request_world_summary_before_monitor_sys_run",
                 "escape_backslash",
-                "request_small_buffer_plus_one"
+                "request_small_buffer_plus_one",
+                "request_ending_in_pct",
+                "request_ending_in_2_pct",
+                "request_ending_in_pct_single_digit",
+                "request_ending_in_pct_invalid_code",
+                "world_has_build_info"
             ]
         }, {
             "id": "Metrics",

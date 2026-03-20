@@ -56,6 +56,37 @@ void Id_unresolved_pair_from_str(void);
 void Id_wildcard_pair_from_str(void);
 void Id_any_pair_from_str(void);
 void Id_invalid_pair(void);
+void Id_value_pair_is_wildcard(void);
+void Id_value_pair_w_rel_wildcard_is_wildcard(void);
+void Id_value_pair_w_obj_wildcard_is_wildcard(void);
+void Id_value_pair_w_wildcard_wildcard_is_wildcard(void);
+void Id_value_pair_w_rel_any_is_wildcard(void);
+void Id_value_pair_w_obj_any_is_wildcard(void);
+void Id_value_pair_w_any_any_is_wildcard(void);
+void Id_value_pair_w_override_is_wildcard(void);
+void Id_value_pair_w_toggle_is_wildcard(void);
+void Id_value_pair_id_is_tag(void);
+void Id_value_pair_id_w_rel_component_is_tag(void);
+void Id_value_pair_id_w_obj_component_is_tag(void);
+void Id_value_pair_id_w_rel_component_obj_wildcard_is_tag(void);
+void Id_value_pair_id_w_obj_wildcard_is_tag(void);
+void Id_value_pair_id_w_tag_property_w_obj_component_is_tag(void);
+void Id_value_pair_id_w_tag_property_w_obj_wildcard_is_tag(void);
+void Id_value_pair_w_rel_wildcard_is_tag(void);
+void Id_value_pair_w_wildcard_wildcard_is_tag(void);
+void Id_value_pair_w_rel_any_is_tag(void);
+void Id_value_pair_w_obj_any_is_tag(void);
+void Id_value_pair_w_rel_tag_obj_any_is_tag(void);
+void Id_value_pair_w_any_any_is_tag(void);
+void Id_value_pair_id_override_is_tag(void);
+void Id_value_pair_id_toggle_is_tag(void);
+void Id_value_pair_from_str(void);
+void Id_value_wildcard_pair_from_str(void);
+void Id_value_any_pair_from_str(void);
+void Id_value_pair_match_pair(void);
+void Id_value_wildcard_pair_match_pair(void);
+void Id_pair_match_value_pair(void);
+void Id_wildcard_pair_match_value_pair(void);
 
 // Testsuite 'Entity'
 void Entity_init_id(void);
@@ -172,6 +203,7 @@ void Entity_entity_from_conflicting_digit(void);
 void Entity_set_version_on_nonempty_entity(void);
 void Entity_set_version_while_deferred(void);
 void Entity_set_version_on_not_alive(void);
+void Entity_get_version_after_reuse(void);
 void Entity_commit_w_on_add(void);
 void Entity_commit_w_on_remove(void);
 void Entity_commit_w_cmd_in_observer(void);
@@ -207,6 +239,8 @@ void Entity_entity_w_parent_w_set_w_parent(void);
 void Entity_entity_w_new_id_and_double_dot(void);
 void Entity_entity_w_existing_id_and_double_dot(void);
 void Entity_entity_w_large_id_name(void);
+void Entity_toggle_component(void);
+void Entity_toggle_component_before_add(void);
 
 // Testsuite 'Each'
 void Each_each_tag(void);
@@ -311,6 +345,7 @@ void Event_emit_staged_from_stage(void);
 void Event_emit_staged_from_world_observer(void);
 void Event_emit_staged_from_stage_observer(void);
 void Event_emit_for_entity(void);
+void Event_emit_for_unused_observed_id(void);
 void Event_emit_custom_for_any(void);
 void Event_emit_custom_implicit_any(void);
 void Event_emit_custom_empty_type(void);
@@ -321,6 +356,8 @@ void Event_emit_nested(void);
 void Event_emit_for_empty_entity(void);
 void Event_enqueue_event_1_id(void);
 void Event_enqueue_event_2_ids(void);
+void Event_enqueue_event_for_id_removed_before_merge(void);
+void Event_enqueue_event_for_deleted_id_before_merge(void);
 void Event_enqueue_event_w_data(void);
 void Event_enqueue_event_w_data_move(void);
 void Event_enqueue_event_w_data_copy(void);
@@ -550,6 +587,11 @@ void Sparse_on_add_observer_tag(void);
 void Sparse_on_set_observer_set(void);
 void Sparse_on_set_observer_modified(void);
 void Sparse_on_set_observer_insert(void);
+void Sparse_on_set_observer_w_override(void);
+void Sparse_on_set_observer_w_child_override(void);
+void Sparse_on_set_observer_w_n_children_override(void);
+void Sparse_on_set_observer_w_child_override_parent_hierarchy(void);
+void Sparse_on_set_observer_w_n_children_override_parent_hierarchy(void);
 void Sparse_on_remove_observer_remove(void);
 void Sparse_on_remove_observer_clear(void);
 void Sparse_on_remove_observer_delete(void);
@@ -620,6 +662,7 @@ void Sparse_on_delete_sparse_delete(void);
 void Sparse_on_delete_sparse_panic(void);
 void Sparse_on_delete_target_sparse_remove(void);
 void Sparse_on_delete_target_sparse_delete(void);
+void Sparse_component_delete_sparse_multiple_entities(void);
 void Sparse_on_delete_target_sparse_panic(void);
 void Sparse_delete_relationship(void);
 void Sparse_delete_parent_of_relationship(void);
@@ -663,6 +706,255 @@ void Sparse_check_sparse_exclusive_target_in_regular_observer(void);
 void Sparse_check_regular_in_sparse_observer(void);
 void Sparse_check_regular_target_in_sparse_observer(void);
 void Sparse_check_regular_exclusive_target_in_sparse_observer(void);
+void Sparse_child_of_component_w_sparse(void);
+void Sparse_child_of_component_w_sparse_exclusive(void);
+void Sparse_create_entity_in_on_remove(void);
+void Sparse_defer_add_two_sparse_w_observer(void);
+void Sparse_defer_remove_two_sparse_w_observer(void);
+void Sparse_defer_set_batch_two_sparse_w_observer(void);
+void Sparse_defer_set_w_sparse_w_observer(void);
+void Sparse_defer_ensure_modified_w_sparse_w_observer(void);
+
+// Testsuite 'NonFragmentingChildOf'
+void NonFragmentingChildOf_set_parent_no_ordered_children(void);
+void NonFragmentingChildOf_add_ordered_children_before_set_parent(void);
+void NonFragmentingChildOf_add_ordered_children_after_set_parent(void);
+void NonFragmentingChildOf_set_0_parent(void);
+void NonFragmentingChildOf_set_parent(void);
+void NonFragmentingChildOf_insert_parent(void);
+void NonFragmentingChildOf_remove_parent(void);
+void NonFragmentingChildOf_clear_child(void);
+void NonFragmentingChildOf_delete_child(void);
+void NonFragmentingChildOf_reparent(void);
+void NonFragmentingChildOf_set_parent_2_children(void);
+void NonFragmentingChildOf_remove_parent_2_children(void);
+void NonFragmentingChildOf_clear_2_children(void);
+void NonFragmentingChildOf_delete_2_children(void);
+void NonFragmentingChildOf_reparent_2_children(void);
+void NonFragmentingChildOf_delete_parent(void);
+void NonFragmentingChildOf_delete_parent_2_children(void);
+void NonFragmentingChildOf_mixed_childof(void);
+void NonFragmentingChildOf_delete_parent_w_mixed_childof(void);
+void NonFragmentingChildOf_delete_nested_parent(void);
+void NonFragmentingChildOf_delete_nested_mixed_parent(void);
+void NonFragmentingChildOf_remove_ordered_children_trait_w_children(void);
+void NonFragmentingChildOf_remove_ordered_children_trait_w_deleted_child(void);
+void NonFragmentingChildOf_remove_ordered_children_trait_w_deleted_children(void);
+void NonFragmentingChildOf_remove_ordered_children_trait_w_deleted_children_reverse(void);
+void NonFragmentingChildOf_get_parent(void);
+void NonFragmentingChildOf_get_parent_2(void);
+void NonFragmentingChildOf_get_parent_3(void);
+void NonFragmentingChildOf_get_parent_4(void);
+void NonFragmentingChildOf_get_parent_5(void);
+void NonFragmentingChildOf_get_parent_6(void);
+void NonFragmentingChildOf_get_parent_7(void);
+void NonFragmentingChildOf_get_target(void);
+void NonFragmentingChildOf_table_child_count(void);
+void NonFragmentingChildOf_table_child_count_2(void);
+void NonFragmentingChildOf_table_child_count_set_parent_after_tag(void);
+void NonFragmentingChildOf_table_child_count_after_add(void);
+void NonFragmentingChildOf_table_child_count_after_remove(void);
+void NonFragmentingChildOf_table_child_count_after_remove_all(void);
+void NonFragmentingChildOf_table_child_count_after_clear(void);
+void NonFragmentingChildOf_table_child_count_after_delete(void);
+void NonFragmentingChildOf_table_child_count_n_children(void);
+void NonFragmentingChildOf_table_child_count_n_children_remove_parent(void);
+void NonFragmentingChildOf_table_child_count_n_children_delete_children(void);
+void NonFragmentingChildOf_table_child_count_n_children_remove_parent_reverse(void);
+void NonFragmentingChildOf_table_child_count_n_children_delete_children_reverse(void);
+void NonFragmentingChildOf_depth_after_parent_set(void);
+void NonFragmentingChildOf_depth_after_nested_parent_set(void);
+void NonFragmentingChildOf_depth_after_parent_replace(void);
+void NonFragmentingChildOf_depth_after_parent_replace_different_depth(void);
+void NonFragmentingChildOf_depth_after_parent_remove(void);
+void NonFragmentingChildOf_depth_after_parent_set_parent(void);
+void NonFragmentingChildOf_depth_after_parent_remove_parent(void);
+void NonFragmentingChildOf_depth_after_parent_remove_other_sibling_parent(void);
+void NonFragmentingChildOf_depth_after_parent_set_parent_sibling_traversable_no_children(void);
+void NonFragmentingChildOf_depth_after_parent_reparent(void);
+void NonFragmentingChildOf_depth_after_parent_reparent_different_depth(void);
+void NonFragmentingChildOf_depth_after_parent_set_parent_nested(void);
+void NonFragmentingChildOf_depth_after_parent_remove_parent_nested(void);
+void NonFragmentingChildOf_depth_after_parent_reparent_nested(void);
+void NonFragmentingChildOf_depth_after_parent_reparent_different_depth_nested(void);
+void NonFragmentingChildOf_defer_delete_parent_and_base(void);
+void NonFragmentingChildOf_defer_delete_parent_and_tag(void);
+void NonFragmentingChildOf_target_for(void);
+void NonFragmentingChildOf_target_for_twice(void);
+void NonFragmentingChildOf_search(void);
+void NonFragmentingChildOf_search_twice(void);
+void NonFragmentingChildOf_target_for_2_lvls_parent(void);
+void NonFragmentingChildOf_target_for_2_lvls_childof(void);
+void NonFragmentingChildOf_target_for_3_lvls_childof_childof(void);
+void NonFragmentingChildOf_target_for_3_lvls_childof_parent(void);
+void NonFragmentingChildOf_target_for_3_lvls_parent_childof(void);
+void NonFragmentingChildOf_target_for_3_lvls_parent_parent(void);
+void NonFragmentingChildOf_target_for_2_lvls_parent_parent(void);
+void NonFragmentingChildOf_target_for_self_parent(void);
+void NonFragmentingChildOf_target_for_inherited(void);
+void NonFragmentingChildOf_target_for_2_lvls_parent_inherited(void);
+void NonFragmentingChildOf_target_for_2_lvls_childof_inherited(void);
+void NonFragmentingChildOf_target_for_3_lvls_childof_childof_inherited(void);
+void NonFragmentingChildOf_target_for_3_lvls_childof_parent_inherited(void);
+void NonFragmentingChildOf_target_for_3_lvls_parent_childof_inherited(void);
+void NonFragmentingChildOf_target_for_3_lvls_parent_parent_inherited(void);
+void NonFragmentingChildOf_target_for_wildcard(void);
+void NonFragmentingChildOf_target_for_wildcard_2_lvls_parent(void);
+void NonFragmentingChildOf_target_for_wildcard_2_lvls_childof(void);
+void NonFragmentingChildOf_target_for_wildcard_3_lvls_childof_childof(void);
+void NonFragmentingChildOf_target_for_wildcard_3_lvls_childof_parent(void);
+void NonFragmentingChildOf_target_for_wildcard_3_lvls_parent_childof(void);
+void NonFragmentingChildOf_target_for_wildcard_3_lvls_parent_parent(void);
+void NonFragmentingChildOf_parent_has_traversable_flag(void);
+void NonFragmentingChildOf_get_2_ordered_children(void);
+void NonFragmentingChildOf_get_2_ordered_children_mixed(void);
+void NonFragmentingChildOf_get_2_ordered_children_mixed_2(void);
+void NonFragmentingChildOf_3_levels_2_children(void);
+void NonFragmentingChildOf_3_levels_2_children_cleanup_order_after_delete(void);
+void NonFragmentingChildOf_3_levels_2_children_cleanup_order_after_fini(void);
+void NonFragmentingChildOf_named_children_same_table_w_same_name(void);
+void NonFragmentingChildOf_add_parent_to_entity_w_component(void);
+void NonFragmentingChildOf_add_parent_to_prefab(void);
+void NonFragmentingChildOf_add_parent_to_prefab_after_add_parent(void);
+void NonFragmentingChildOf_reparent_to_prefab(void);
+void NonFragmentingChildOf_lookup(void);
+void NonFragmentingChildOf_lookup_2_lvls(void);
+void NonFragmentingChildOf_lookup_from(void);
+void NonFragmentingChildOf_lookup_from_2_lvls(void);
+void NonFragmentingChildOf_lookup_after_reparent(void);
+void NonFragmentingChildOf_lookup_after_remove_parent(void);
+void NonFragmentingChildOf_lookup_after_clear(void);
+void NonFragmentingChildOf_lookup_after_delete(void);
+void NonFragmentingChildOf_set_name_after_create(void);
+void NonFragmentingChildOf_deep_hierarchy(void);
+void NonFragmentingChildOf_create_delete_mixed_tree(void);
+void NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_1(void);
+void NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_2(void);
+void NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_3(void);
+void NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_4(void);
+void NonFragmentingChildOf_prefab_child_has_prefab_w_insert(void);
+void NonFragmentingChildOf_prefab_child_has_prefab_w_new_child(void);
+void NonFragmentingChildOf_prefab_child_has_prefab_w_set(void);
+void NonFragmentingChildOf_prefab_child_nested_has_prefab_w_insert(void);
+void NonFragmentingChildOf_prefab_child_nested_has_prefab_w_new_child(void);
+void NonFragmentingChildOf_prefab_child_nested_has_prefab_w_set(void);
+void NonFragmentingChildOf_prefab_variant_w_children(void);
+void NonFragmentingChildOf_prefab_variant_w_nested_children(void);
+void NonFragmentingChildOf_instantiate_tree_1_child(void);
+void NonFragmentingChildOf_instantiate_tree_2_children(void);
+void NonFragmentingChildOf_instantiate_tree_3_children(void);
+void NonFragmentingChildOf_instantiate_tree_w_on_set_up_childof_observer_crash(void);
+void NonFragmentingChildOf_instantiate_w_dont_inherit(void);
+void NonFragmentingChildOf_instantiate_w_inherit(void);
+void NonFragmentingChildOf_instantiate_w_auto_override(void);
+void NonFragmentingChildOf_instantiate_w_isa(void);
+void NonFragmentingChildOf_instantiate_tree_twice(void);
+void NonFragmentingChildOf_instantiate_tree_twice_different_table(void);
+void NonFragmentingChildOf_instantiate_tree_at_depth_1_w_parent(void);
+void NonFragmentingChildOf_instantiate_tree_at_depth_2_w_parent(void);
+void NonFragmentingChildOf_instantiate_tree_at_depth_n_w_parent(void);
+void NonFragmentingChildOf_instantiate_tree_at_depth_1_w_childof(void);
+void NonFragmentingChildOf_instantiate_tree_at_depth_2_w_childof(void);
+void NonFragmentingChildOf_instantiate_tree_at_depth_n_w_childof(void);
+void NonFragmentingChildOf_reparent_instantiated_tree_w_parent(void);
+void NonFragmentingChildOf_reparent_instantiated_tree_w_childof(void);
+void NonFragmentingChildOf_instantiate_instance_after_remove_all_tag(void);
+void NonFragmentingChildOf_instantiate_instance_after_delete_with_tag(void);
+void NonFragmentingChildOf_instantiate_instance_after_shrink(void);
+void NonFragmentingChildOf_instantiate_instance_after_delete_empty_tables(void);
+void NonFragmentingChildOf_get_instance_child_from_prefab(void);
+void NonFragmentingChildOf_get_instance_child_from_prefab_variant(void);
+void NonFragmentingChildOf_named_prefab_hierarchy(void);
+void NonFragmentingChildOf_named_prefab_variant_hierarchy(void);
+void NonFragmentingChildOf_named_prefab_hierarchy_new_w_parent(void);
+void NonFragmentingChildOf_named_prefab_variant_hierarchy_new_w_parent(void);
+void NonFragmentingChildOf_delete_with_parent(void);
+void NonFragmentingChildOf_delete_with_parent_nested(void);
+void NonFragmentingChildOf_delete_with_parent_nested_2(void);
+void NonFragmentingChildOf_delete_with_parent_nested_3(void);
+void NonFragmentingChildOf_delete_with_parent_nested_4(void);
+void NonFragmentingChildOf_delete_with_parent_w_up_observer(void);
+void NonFragmentingChildOf_delete_with_parent_nested_w_up_observer(void);
+void NonFragmentingChildOf_delete_with_parent_mixed_nested_w_up_observer(void);
+void NonFragmentingChildOf_delete_tree_1(void);
+void NonFragmentingChildOf_delete_tree_2(void);
+void NonFragmentingChildOf_delete_tree_3(void);
+void NonFragmentingChildOf_delete_tree_4(void);
+void NonFragmentingChildOf_delete_tree_5(void);
+void NonFragmentingChildOf_delete_tree_6(void);
+void NonFragmentingChildOf_delete_tree_7(void);
+void NonFragmentingChildOf_add_parent_to_childof_child(void);
+void NonFragmentingChildOf_add_childof_to_parent_child(void);
+void NonFragmentingChildOf_add_parent_to_childof_child_same_parent(void);
+void NonFragmentingChildOf_add_childof_to_parent_child_same_parent(void);
+void NonFragmentingChildOf_new_w_parent_w_same_name_twice(void);
+void NonFragmentingChildOf_defer_new_w_parent(void);
+void NonFragmentingChildOf_defer_new_w_parent_w_name(void);
+void NonFragmentingChildOf_defer_new_w_parent_w_same_name_twice(void);
+void NonFragmentingChildOf_new_w_parent_from_stage(void);
+void NonFragmentingChildOf_new_w_parent_w_name_from_stage(void);
+void NonFragmentingChildOf_prefab_instance_w_dont_fragment_tag(void);
+void NonFragmentingChildOf_prefab_instance_w_dont_fragment_component(void);
+void NonFragmentingChildOf_prefab_instance_w_inherit_dont_fragment_component(void);
+void NonFragmentingChildOf_instantiate_recycled_prefab(void);
+void NonFragmentingChildOf_defer_set_parent_batched(void);
+void NonFragmentingChildOf_defer_new_w_parent_batched(void);
+void NonFragmentingChildOf_defer_set_after_remove_instance(void);
+void NonFragmentingChildOf_delete_parent_w_n_children_after_delete_1_child(void);
+void NonFragmentingChildOf_prefab_1_child_offset_id(void);
+void NonFragmentingChildOf_prefab_2_children_offset_id(void);
+void NonFragmentingChildOf_prefab_3_children_offset_id(void);
+void NonFragmentingChildOf_prefab_2_children_2_types_offset_id(void);
+void NonFragmentingChildOf_prefab_3_children_3_types_offset_id(void);
+void NonFragmentingChildOf_prefab_2_children_2_types_reverse_offset_id(void);
+void NonFragmentingChildOf_prefab_3_children_3_types_reverse_offset_id(void);
+void NonFragmentingChildOf_prefab_2_lvl_nested_children_offset_id(void);
+void NonFragmentingChildOf_prefab_3_lvl_nested_children_offset_id(void);
+void NonFragmentingChildOf_prefab_recycled_children_offset_id(void);
+void NonFragmentingChildOf_prefab_recycled_instance_offset_id(void);
+void NonFragmentingChildOf_prefab_children_recycled_offset_id(void);
+void NonFragmentingChildOf_prefab_recycled_children_recycled_offset_id(void);
+void NonFragmentingChildOf_prefab_recycled_children_recycled_offset_id_different_generation(void);
+void NonFragmentingChildOf_prefab_1_child_offset_id_occupied(void);
+void NonFragmentingChildOf_prefab_1_child_offset_id_recycled_occupied(void);
+void NonFragmentingChildOf_prefab_child_offset_w_smaller_child_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_1_child_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_2_children_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_3_children_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_2_children_2_types_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_3_children_3_types_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_2_children_2_types_reverse_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_3_children_3_types_reverse_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_2_lvl_nested_children_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_3_lvl_nested_children_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_recycled_children_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_recycled_instance_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_children_recycled_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_recycled_children_recycled_offset_id(void);
+void NonFragmentingChildOf_prefab_ordered_children_recycled_children_recycled_offset_id_different_generation(void);
+void NonFragmentingChildOf_prefab_ordered_children_1_child_offset_id_occupied(void);
+void NonFragmentingChildOf_prefab_ordered_children_1_child_offset_id_recycled_occupied(void);
+void NonFragmentingChildOf_prefab_ordered_children_child_offset_w_smaller_child_id(void);
+void NonFragmentingChildOf_defer_set_parent_to_deleted(void);
+void NonFragmentingChildOf_defer_set_parent_to_deleted_batched(void);
+void NonFragmentingChildOf_defer_set_parent_to_deleted_w_on_remove(void);
+void NonFragmentingChildOf_defer_set_parent_to_deleted_batched_w_on_remove(void);
+void NonFragmentingChildOf_defer_set_existing_parent_to_deleted(void);
+void NonFragmentingChildOf_defer_set_existing_parent_to_deleted_batched(void);
+void NonFragmentingChildOf_defer_remove_set_parent_different_stages(void);
+void NonFragmentingChildOf_defer_remove_set_parent_different_stages_batched(void);
+void NonFragmentingChildOf_defer_remove_set_parent_different_stages_w_observer(void);
+void NonFragmentingChildOf_defer_reparent_to_deleted_parent(void);
+void NonFragmentingChildOf_delete_mixed_tree_1(void);
+void NonFragmentingChildOf_delete_mixed_tree_2(void);
+void NonFragmentingChildOf_delete_mixed_tree_3(void);
+void NonFragmentingChildOf_delete_mixed_tree_4(void);
+void NonFragmentingChildOf_delete_mixed_tree_5(void);
+void NonFragmentingChildOf_instantiate_parent_w_has_in_hook(void);
+void NonFragmentingChildOf_add_prefab_tag_after_hierarchy_creation(void);
+void NonFragmentingChildOf_defer_add_prefab_tag_after_hierarchy_creation(void);
+void NonFragmentingChildOf_add_prefab_tag_after_hierarchy_creation_2(void);
+void NonFragmentingChildOf_defer_add_prefab_tag_after_hierarchy_creation_2(void);
 
 // Testsuite 'Hierarchies'
 void Hierarchies_setup(void);
@@ -670,6 +962,7 @@ void Hierarchies_empty_scope(void);
 void Hierarchies_get_parent(void);
 void Hierarchies_get_parent_from_nested(void);
 void Hierarchies_get_parent_from_nested_2(void);
+void Hierarchies_get_target_negative_index(void);
 void Hierarchies_get_object_from_0(void);
 void Hierarchies_tree_iter_empty(void);
 void Hierarchies_tree_iter_1_table(void);
@@ -812,10 +1105,18 @@ void OrderedChildren_get_ordered_children(void);
 void OrderedChildren_get_ordered_children_from_stage(void);
 void OrderedChildren_get_ordered_children_from_prefab_instance_no_children(void);
 void OrderedChildren_get_ordered_children_from_prefab_instance_3_children(void);
+void OrderedChildren_get_ordered_children_from_prefab_instance_3_children_different_table(void);
 void OrderedChildren_get_ordered_children_from_prefab_instance_nested_children(void);
+void OrderedChildren_prefab_w_nested_ordered_children(void);
+void OrderedChildren_prefab_w_nested_ordered_children_2(void);
+void OrderedChildren_prefab_w_slots(void);
+void OrderedChildren_prefab_get_target_after_reorder(void);
 void OrderedChildren_recreate_named_child(void);
 void OrderedChildren_lookup_after_move_to_root(void);
 void OrderedChildren_lookup_after_clear(void);
+void OrderedChildren_bulk_create_ordered_children(void);
+void OrderedChildren_get_ordered_children_from_prefab_instance_nested_children(void);
+void OrderedChildren_ordered_children_parent_is_traversable(void);
 
 // Testsuite 'Has'
 void Has_zero(void);
@@ -836,6 +1137,10 @@ void Has_has_entity_owned_0(void);
 void Has_has_entity_owned_0_component(void);
 void Has_has_wildcard(void);
 void Has_has_wildcard_pair(void);
+void Has_has_childof_w_parent(void);
+void Has_has_childof_wildcard_w_parent(void);
+void Has_owns_childof_w_parent(void);
+void Has_owns_childof_wildcard_w_parent(void);
 
 // Testsuite 'Count'
 void Count_count_empty(void);
@@ -873,6 +1178,7 @@ void Reference_get_ref_after_delete(void);
 void Reference_get_ref_after_delete_other(void);
 void Reference_get_ref_after_delete_child(void);
 void Reference_get_ref_after_clear(void);
+void Reference_get_ref_after_clear_table(void);
 void Reference_get_ref_after_clear_other(void);
 void Reference_get_ref_after_realloc(void);
 void Reference_get_ref_after_realloc_w_lifecycle(void);
@@ -1168,6 +1474,7 @@ void Lookup_lookup_name_65_chars(void);
 void Lookup_lookup_path_63_chars(void);
 void Lookup_lookup_path_64_chars(void);
 void Lookup_lookup_path_65_chars(void);
+void Lookup_lookup_malformed(void);
 
 // Testsuite 'Singleton'
 void Singleton_add_singleton(void);
@@ -1201,6 +1508,10 @@ void Clone_tag_w_value(void);
 void Clone_1_tag_1_component(void);
 void Clone_1_tag_1_component_w_value(void);
 void Clone_clone_w_name(void);
+void Clone_clone_component(void);
+void Clone_clone_component_w_value(void);
+void Clone_clone_component_w_entity(void);
+void Clone_clone_component_w_entity_w_value(void);
 
 // Testsuite 'ComponentLifecycle'
 void ComponentLifecycle_setup(void);
@@ -1336,6 +1647,12 @@ void ComponentLifecycle_copy_ctor_w_override(void);
 void ComponentLifecycle_copy_ctor_w_override_w_emplace(void);
 void ComponentLifecycle_copy_ctor_w_override_w_ensure(void);
 void ComponentLifecycle_shrink(void);
+void ComponentLifecycle_dtor_after_add_exclusive_component(void);
+void ComponentLifecycle_dtor_after_add_exclusive_component_last(void);
+void ComponentLifecycle_has_in_on_add_hook_new(void);
+void ComponentLifecycle_has_in_on_add_hook_move(void);
+void ComponentLifecycle_get_in_on_add_hook_new(void);
+void ComponentLifecycle_get_in_on_add_hook_move(void);
 
 // Testsuite 'Pairs'
 void Pairs_type_w_one_pair(void);
@@ -1463,7 +1780,17 @@ void Pairs_force_relationship_on_relationship(void);
 void Pairs_force_target_on_component(void);
 void Pairs_force_target_on_relationship(void);
 void Pairs_force_target_on_target(void);
+void Pairs_disable_w_toggle_pair_rel_target_traits(void);
 void Pairs_relationship_with_exclusive(void);
+void Pairs_add_value_pair(void);
+void Pairs_add_value_pairs(void);
+void Pairs_add_exclusive_value_pairs(void);
+void Pairs_remove_value_pairs_wildcard(void);
+void Pairs_value_pair_to_str(void);
+void Pairs_has_value_pair_wildcard(void);
+void Pairs_has_value_pair_any(void);
+void Pairs_target_w_value_pair(void);
+void Pairs_inherit_relationship_trait(void);
 
 // Testsuite 'Trigger'
 void Trigger_on_add_trigger_before_table(void);
@@ -1729,6 +2056,10 @@ void Observer_propagate_remove_isa_of_parent(void);
 void Observer_propagate_add_childof_of_base(void);
 void Observer_propagate_remove_childof_of_base(void);
 void Observer_emit_for_parent_w_prefab_child_and_instance(void);
+void Observer_query_eval_w_component_that_triggered_observer(void);
+void Observer_query_eval_w_pair_first_var_that_triggered_observer(void);
+void Observer_query_eval_w_pair_second_var_that_triggered_observer(void);
+void Observer_query_eval_w_pair_both_vars_that_triggered_observer(void);
 void Observer_observer_w_2_fixed_src(void);
 void Observer_emit_for_recreated_id_after_remove_all(void);
 void Observer_emit_for_recreated_id_after_remove_all_wildcard(void);
@@ -1865,6 +2196,41 @@ void Observer_1_singleton_term_field_size_w_tag(void);
 void Observer_2_singleton_terms_field_size_w_tag(void);
 void Observer_1_on_set_overridden_term_field_size_w_tag(void);
 void Observer_2_on_set_overridden_terms_field_size_w_tag(void);
+void Observer_create_observer_in_observer(void);
+void Observer_on_add_childof_w_parent_component(void);
+void Observer_on_add_childof_w_parent_component_observer_after_table(void);
+void Observer_on_add_childof_wildcard_w_parent_component(void);
+void Observer_on_add_childof_any_w_parent_component(void);
+void Observer_on_remove_childof_w_parent_component(void);
+void Observer_on_add_childof_w_parent_component_multi_term(void);
+void Observer_on_add_childof_wildcard_w_parent_component_multi_term(void);
+void Observer_on_add_childof_wildcard_w_parent_component_multi_term_after_shrink(void);
+void Observer_on_add_childof_wildcard_w_parent_component_multi_term_delete_observer(void);
+void Observer_on_add_childof_any_w_parent_component_multi_term(void);
+void Observer_on_remove_childof_w_parent_component_multi_term(void);
+void Observer_up_forward_w_parent_component(void);
+void Observer_up_propagate_w_parent_component(void);
+void Observer_up_forward_w_parent_component_2_levels(void);
+void Observer_up_forward_w_parent_component_2_levels_reverse(void);
+void Observer_up_propagate_w_parent_component_2_levels(void);
+void Observer_up_forward_w_parent_component_2_levels_mixed_1(void);
+void Observer_up_forward_w_parent_component_2_levels_mixed_2(void);
+void Observer_up_propagate_w_parent_component_2_levels_mixed_1(void);
+void Observer_up_propagate_w_parent_component_2_levels_mixed_2(void);
+void Observer_self_up_forward_w_parent_component(void);
+void Observer_self_up_propagate_w_parent_component(void);
+void Observer_self_up_forward_w_parent_component_2_levels(void);
+void Observer_self_up_forward_w_parent_component_2_levels_reverse(void);
+void Observer_self_up_propagate_w_parent_component_2_levels(void);
+void Observer_self_up_forward_w_parent_component_2_levels_mixed_1(void);
+void Observer_self_up_forward_w_parent_component_2_levels_mixed_2(void);
+void Observer_self_up_propagate_w_parent_component_2_levels_mixed_1(void);
+void Observer_self_up_propagate_w_parent_component_2_levels_mixed_2(void);
+void Observer_up_forward_w_parent_component_reparent(void);
+void Observer_self_up_forward_w_parent_component_reparent(void);
+void Observer_up_propagate_w_parent_component_on_set(void);
+void Observer_self_up_propagate_w_parent_component_on_set(void);
+void Observer_parent_on_set_w_exclusive_pair(void);
 void Observer_cache_test_1(void);
 void Observer_cache_test_2(void);
 void Observer_cache_test_3(void);
@@ -2153,6 +2519,23 @@ void Prefab_prefab_recycled_children_recycled_offset_id_different_generation(voi
 void Prefab_prefab_1_child_offset_id_occupied(void);
 void Prefab_prefab_1_child_offset_id_recycled_occupied(void);
 void Prefab_prefab_child_offset_w_smaller_child_id(void);
+void Prefab_prefab_ordered_children_1_child_offset_id(void);
+void Prefab_prefab_ordered_children_2_children_offset_id(void);
+void Prefab_prefab_ordered_children_3_children_offset_id(void);
+void Prefab_prefab_ordered_children_2_children_2_types_offset_id(void);
+void Prefab_prefab_ordered_children_3_children_3_types_offset_id(void);
+void Prefab_prefab_ordered_children_2_children_2_types_reverse_offset_id(void);
+void Prefab_prefab_ordered_children_3_children_3_types_reverse_offset_id(void);
+void Prefab_prefab_ordered_children_2_lvl_nested_children_offset_id(void);
+void Prefab_prefab_ordered_children_3_lvl_nested_children_offset_id(void);
+void Prefab_prefab_ordered_children_recycled_children_offset_id(void);
+void Prefab_prefab_ordered_children_recycled_instance_offset_id(void);
+void Prefab_prefab_ordered_children_children_recycled_offset_id(void);
+void Prefab_prefab_ordered_children_recycled_children_recycled_offset_id(void);
+void Prefab_prefab_ordered_children_recycled_children_recycled_offset_id_different_generation(void);
+void Prefab_prefab_ordered_children_1_child_offset_id_occupied(void);
+void Prefab_prefab_ordered_children_1_child_offset_id_recycled_occupied(void);
+void Prefab_prefab_ordered_children_child_offset_w_smaller_child_id(void);
 void Prefab_prefab_w_union(void);
 void Prefab_prefab_child_w_union(void);
 void Prefab_prefab_w_union_and_component(void);
@@ -2173,6 +2556,10 @@ void Prefab_create_instances_w_override_and_ctor(void);
 void Prefab_create_instances_w_override_and_copy_ctor(void);
 void Prefab_create_instances_w_override_and_on_add(void);
 void Prefab_create_instances_w_override_and_on_set(void);
+void Prefab_remove_all(void);
+void Prefab_delete_with(void);
+void Prefab_prefab_children_after_adding_prefab(void);
+void Prefab_add_base_w_exclusive_override(void);
 
 // Testsuite 'World'
 void World_setup(void);
@@ -2271,6 +2658,7 @@ void World_init_create_delete_random_1_entities_shrink_fini(void);
 void World_init_create_delete_random_2_entities_shrink_fini(void);
 void World_recreate_tables_after_shrink(void);
 void World_delete_empty_component_record_w_shrink(void);
+void World_delete_empty_hi_component_record_w_shrink(void);
 void World_delete_empty_queried_for_component_record_w_shrink(void);
 void World_delete_empty_sparse_component_record_w_shrink(void);
 void World_delete_empty_dont_fragment_component_record_w_shrink(void);
@@ -2278,6 +2666,8 @@ void World_dont_delete_non_empty_component_record_w_shrink(void);
 void World_dont_delete_non_empty_queried_for_component_record_w_shrink(void);
 void World_dont_delete_non_empty_sparse_component_record_w_shrink(void);
 void World_dont_delete_non_empty_dont_fragment_component_record_w_shrink(void);
+void World_remove_from_traversable_after_shrink(void);
+void World_shrink_non_fragmenting_childof(void);
 void World_mini_all_tables_builtin(void);
 void World_mini_all_tables_builtin_after_add(void);
 void World_user_component_not_builtin(void);
@@ -2326,6 +2716,7 @@ void World_add_sparse_after_pair_query(void);
 void World_add_dont_fragment_after_pair_query(void);
 void World_add_can_toggle_after_pair_query(void);
 void World_add_traversable_after_pair_query(void);
+void World_set_component_after_in_use(void);
 
 // Testsuite 'ExclusiveAccess'
 void ExclusiveAccess_self(void);
@@ -2479,6 +2870,8 @@ void Type_large_type_expr(void);
 void Type_large_type_expr_limit(void);
 
 // Testsuite 'Commands'
+void Commands_is_deferred(void);
+void Commands_is_defer_suspended(void);
 void Commands_defer_new(void);
 void Commands_defer_bulk_new(void);
 void Commands_defer_add(void);
@@ -2647,6 +3040,11 @@ void Commands_on_replace_w_set_batched(void);
 void Commands_on_replace_w_set_batched_twice(void);
 void Commands_on_replace_w_set_batched_existing(void);
 void Commands_on_replace_w_set_batched_existing_twice(void);
+void Commands_set_existing_after_remove(void);
+void Commands_set_existing_after_remove_move_table(void);
+void Commands_set_existing_after_remove_w_is_a(void);
+void Commands_set_existing_after_remove_w_is_a_move_table(void);
+void Commands_set_existing_after_remove_2_stages(void);
 
 // Testsuite 'SingleThreadStaging'
 void SingleThreadStaging_setup(void);
@@ -2760,6 +3158,7 @@ void Table_has_id(void);
 void Table_has_pair(void);
 void Table_has_wildcard_pair(void);
 void Table_has_any_pair(void);
+void Table_get_target_out_of_range(void);
 void Table_clear_table_kills_entities(void);
 void Table_clear_table_add_new(void);
 void Table_clear_table_check_size(void);
@@ -2796,6 +3195,28 @@ void Internals_component_record_has_table(void);
 void Internals_component_record_iter_tables(void);
 void Internals_table_get_records(void);
 void Internals_childof_tgt_exists_after_query(void);
+void Internals_component_record_depth_root(void);
+void Internals_component_record_depth_parent(void);
+void Internals_component_record_depth_nested_parent(void);
+void Internals_component_record_depth_after_reparent(void);
+void Internals_component_record_depth_after_reparent_different_depth(void);
+void Internals_component_record_depth_nested_after_reparent(void);
+void Internals_component_record_depth_nested_after_reparent_different_depth(void);
+void Internals_component_record_depth_after_parent_remove(void);
+void Internals_component_record_depth_nested_after_parent_remove(void);
+void Internals_component_record_depth_after_parent_add(void);
+void Internals_component_record_depth_nested_after_parent_add(void);
+void Internals_non_fragmenting_component_record_depth_parent(void);
+void Internals_non_fragmenting_component_record_depth_nested_parent(void);
+void Internals_non_fragmenting_component_record_depth_after_reparent(void);
+void Internals_non_fragmenting_component_record_depth_after_reparent_different_depth(void);
+void Internals_non_fragmenting_component_record_depth_nested_after_reparent(void);
+void Internals_non_fragmenting_component_record_depth_nested_after_reparent_different_depth(void);
+void Internals_non_fragmenting_component_record_depth_after_parent_remove(void);
+void Internals_non_fragmenting_component_record_depth_nested_after_parent_remove(void);
+void Internals_non_fragmenting_component_record_depth_after_parent_add(void);
+void Internals_non_fragmenting_component_record_depth_nested_after_parent_add(void);
+void Internals_component_record_for_value_pair(void);
 void Internals_create_65k_tables(void);
 
 // Testsuite 'Error'
@@ -2812,6 +3233,7 @@ void Error_log_log(void);
 void Error_log_warning(void);
 void Error_log_error(void);
 void Error_set_log_level_return(void);
+void Error_print_backtrace(void);
 
 // Testsuite 'StackAlloc'
 void StackAlloc_init_fini(void);
@@ -3005,6 +3427,130 @@ bake_test_case Id_testcases[] = {
     {
         "invalid_pair",
         Id_invalid_pair
+    },
+    {
+        "value_pair_is_wildcard",
+        Id_value_pair_is_wildcard
+    },
+    {
+        "value_pair_w_rel_wildcard_is_wildcard",
+        Id_value_pair_w_rel_wildcard_is_wildcard
+    },
+    {
+        "value_pair_w_obj_wildcard_is_wildcard",
+        Id_value_pair_w_obj_wildcard_is_wildcard
+    },
+    {
+        "value_pair_w_wildcard_wildcard_is_wildcard",
+        Id_value_pair_w_wildcard_wildcard_is_wildcard
+    },
+    {
+        "value_pair_w_rel_any_is_wildcard",
+        Id_value_pair_w_rel_any_is_wildcard
+    },
+    {
+        "value_pair_w_obj_any_is_wildcard",
+        Id_value_pair_w_obj_any_is_wildcard
+    },
+    {
+        "value_pair_w_any_any_is_wildcard",
+        Id_value_pair_w_any_any_is_wildcard
+    },
+    {
+        "value_pair_w_override_is_wildcard",
+        Id_value_pair_w_override_is_wildcard
+    },
+    {
+        "value_pair_w_toggle_is_wildcard",
+        Id_value_pair_w_toggle_is_wildcard
+    },
+    {
+        "value_pair_id_is_tag",
+        Id_value_pair_id_is_tag
+    },
+    {
+        "value_pair_id_w_rel_component_is_tag",
+        Id_value_pair_id_w_rel_component_is_tag
+    },
+    {
+        "value_pair_id_w_obj_component_is_tag",
+        Id_value_pair_id_w_obj_component_is_tag
+    },
+    {
+        "value_pair_id_w_rel_component_obj_wildcard_is_tag",
+        Id_value_pair_id_w_rel_component_obj_wildcard_is_tag
+    },
+    {
+        "value_pair_id_w_obj_wildcard_is_tag",
+        Id_value_pair_id_w_obj_wildcard_is_tag
+    },
+    {
+        "value_pair_id_w_tag_property_w_obj_component_is_tag",
+        Id_value_pair_id_w_tag_property_w_obj_component_is_tag
+    },
+    {
+        "value_pair_id_w_tag_property_w_obj_wildcard_is_tag",
+        Id_value_pair_id_w_tag_property_w_obj_wildcard_is_tag
+    },
+    {
+        "value_pair_w_rel_wildcard_is_tag",
+        Id_value_pair_w_rel_wildcard_is_tag
+    },
+    {
+        "value_pair_w_wildcard_wildcard_is_tag",
+        Id_value_pair_w_wildcard_wildcard_is_tag
+    },
+    {
+        "value_pair_w_rel_any_is_tag",
+        Id_value_pair_w_rel_any_is_tag
+    },
+    {
+        "value_pair_w_obj_any_is_tag",
+        Id_value_pair_w_obj_any_is_tag
+    },
+    {
+        "value_pair_w_rel_tag_obj_any_is_tag",
+        Id_value_pair_w_rel_tag_obj_any_is_tag
+    },
+    {
+        "value_pair_w_any_any_is_tag",
+        Id_value_pair_w_any_any_is_tag
+    },
+    {
+        "value_pair_id_override_is_tag",
+        Id_value_pair_id_override_is_tag
+    },
+    {
+        "value_pair_id_toggle_is_tag",
+        Id_value_pair_id_toggle_is_tag
+    },
+    {
+        "value_pair_from_str",
+        Id_value_pair_from_str
+    },
+    {
+        "value_wildcard_pair_from_str",
+        Id_value_wildcard_pair_from_str
+    },
+    {
+        "value_any_pair_from_str",
+        Id_value_any_pair_from_str
+    },
+    {
+        "value_pair_match_pair",
+        Id_value_pair_match_pair
+    },
+    {
+        "value_wildcard_pair_match_pair",
+        Id_value_wildcard_pair_match_pair
+    },
+    {
+        "pair_match_value_pair",
+        Id_pair_match_value_pair
+    },
+    {
+        "wildcard_pair_match_value_pair",
+        Id_wildcard_pair_match_value_pair
     }
 };
 
@@ -3466,6 +4012,10 @@ bake_test_case Entity_testcases[] = {
         Entity_set_version_on_not_alive
     },
     {
+        "get_version_after_reuse",
+        Entity_get_version_after_reuse
+    },
+    {
         "commit_w_on_add",
         Entity_commit_w_on_add
     },
@@ -3604,6 +4154,14 @@ bake_test_case Entity_testcases[] = {
     {
         "entity_w_large_id_name",
         Entity_entity_w_large_id_name
+    },
+    {
+        "toggle_component",
+        Entity_toggle_component
+    },
+    {
+        "toggle_component_before_add",
+        Entity_toggle_component_before_add
     }
 };
 
@@ -4002,6 +4560,10 @@ bake_test_case Event_testcases[] = {
         Event_emit_for_entity
     },
     {
+        "emit_for_unused_observed_id",
+        Event_emit_for_unused_observed_id
+    },
+    {
         "emit_custom_for_any",
         Event_emit_custom_for_any
     },
@@ -4040,6 +4602,14 @@ bake_test_case Event_testcases[] = {
     {
         "enqueue_event_2_ids",
         Event_enqueue_event_2_ids
+    },
+    {
+        "enqueue_event_for_id_removed_before_merge",
+        Event_enqueue_event_for_id_removed_before_merge
+    },
+    {
+        "enqueue_event_for_deleted_id_before_merge",
+        Event_enqueue_event_for_deleted_id_before_merge
     },
     {
         "enqueue_event_w_data",
@@ -4920,6 +5490,26 @@ bake_test_case Sparse_testcases[] = {
         Sparse_on_set_observer_insert
     },
     {
+        "on_set_observer_w_override",
+        Sparse_on_set_observer_w_override
+    },
+    {
+        "on_set_observer_w_child_override",
+        Sparse_on_set_observer_w_child_override
+    },
+    {
+        "on_set_observer_w_n_children_override",
+        Sparse_on_set_observer_w_n_children_override
+    },
+    {
+        "on_set_observer_w_child_override_parent_hierarchy",
+        Sparse_on_set_observer_w_child_override_parent_hierarchy
+    },
+    {
+        "on_set_observer_w_n_children_override_parent_hierarchy",
+        Sparse_on_set_observer_w_n_children_override_parent_hierarchy
+    },
+    {
         "on_remove_observer_remove",
         Sparse_on_remove_observer_remove
     },
@@ -5200,6 +5790,10 @@ bake_test_case Sparse_testcases[] = {
         Sparse_on_delete_target_sparse_delete
     },
     {
+        "component_delete_sparse_multiple_entities",
+        Sparse_component_delete_sparse_multiple_entities
+    },
+    {
         "on_delete_target_sparse_panic",
         Sparse_on_delete_target_sparse_panic
     },
@@ -5370,6 +5964,997 @@ bake_test_case Sparse_testcases[] = {
     {
         "check_regular_exclusive_target_in_sparse_observer",
         Sparse_check_regular_exclusive_target_in_sparse_observer
+    },
+    {
+        "child_of_component_w_sparse",
+        Sparse_child_of_component_w_sparse
+    },
+    {
+        "child_of_component_w_sparse_exclusive",
+        Sparse_child_of_component_w_sparse_exclusive
+    },
+    {
+        "create_entity_in_on_remove",
+        Sparse_create_entity_in_on_remove
+    },
+    {
+        "defer_add_two_sparse_w_observer",
+        Sparse_defer_add_two_sparse_w_observer
+    },
+    {
+        "defer_remove_two_sparse_w_observer",
+        Sparse_defer_remove_two_sparse_w_observer
+    },
+    {
+        "defer_set_batch_two_sparse_w_observer",
+        Sparse_defer_set_batch_two_sparse_w_observer
+    },
+    {
+        "defer_set_w_sparse_w_observer",
+        Sparse_defer_set_w_sparse_w_observer
+    },
+    {
+        "defer_ensure_modified_w_sparse_w_observer",
+        Sparse_defer_ensure_modified_w_sparse_w_observer
+    }
+};
+
+bake_test_case NonFragmentingChildOf_testcases[] = {
+    {
+        "set_parent_no_ordered_children",
+        NonFragmentingChildOf_set_parent_no_ordered_children
+    },
+    {
+        "add_ordered_children_before_set_parent",
+        NonFragmentingChildOf_add_ordered_children_before_set_parent
+    },
+    {
+        "add_ordered_children_after_set_parent",
+        NonFragmentingChildOf_add_ordered_children_after_set_parent
+    },
+    {
+        "set_0_parent",
+        NonFragmentingChildOf_set_0_parent
+    },
+    {
+        "set_parent",
+        NonFragmentingChildOf_set_parent
+    },
+    {
+        "insert_parent",
+        NonFragmentingChildOf_insert_parent
+    },
+    {
+        "remove_parent",
+        NonFragmentingChildOf_remove_parent
+    },
+    {
+        "clear_child",
+        NonFragmentingChildOf_clear_child
+    },
+    {
+        "delete_child",
+        NonFragmentingChildOf_delete_child
+    },
+    {
+        "reparent",
+        NonFragmentingChildOf_reparent
+    },
+    {
+        "set_parent_2_children",
+        NonFragmentingChildOf_set_parent_2_children
+    },
+    {
+        "remove_parent_2_children",
+        NonFragmentingChildOf_remove_parent_2_children
+    },
+    {
+        "clear_2_children",
+        NonFragmentingChildOf_clear_2_children
+    },
+    {
+        "delete_2_children",
+        NonFragmentingChildOf_delete_2_children
+    },
+    {
+        "reparent_2_children",
+        NonFragmentingChildOf_reparent_2_children
+    },
+    {
+        "delete_parent",
+        NonFragmentingChildOf_delete_parent
+    },
+    {
+        "delete_parent_2_children",
+        NonFragmentingChildOf_delete_parent_2_children
+    },
+    {
+        "mixed_childof",
+        NonFragmentingChildOf_mixed_childof
+    },
+    {
+        "delete_parent_w_mixed_childof",
+        NonFragmentingChildOf_delete_parent_w_mixed_childof
+    },
+    {
+        "delete_nested_parent",
+        NonFragmentingChildOf_delete_nested_parent
+    },
+    {
+        "delete_nested_mixed_parent",
+        NonFragmentingChildOf_delete_nested_mixed_parent
+    },
+    {
+        "remove_ordered_children_trait_w_children",
+        NonFragmentingChildOf_remove_ordered_children_trait_w_children
+    },
+    {
+        "remove_ordered_children_trait_w_deleted_child",
+        NonFragmentingChildOf_remove_ordered_children_trait_w_deleted_child
+    },
+    {
+        "remove_ordered_children_trait_w_deleted_children",
+        NonFragmentingChildOf_remove_ordered_children_trait_w_deleted_children
+    },
+    {
+        "remove_ordered_children_trait_w_deleted_children_reverse",
+        NonFragmentingChildOf_remove_ordered_children_trait_w_deleted_children_reverse
+    },
+    {
+        "get_parent",
+        NonFragmentingChildOf_get_parent
+    },
+    {
+        "get_parent_2",
+        NonFragmentingChildOf_get_parent_2
+    },
+    {
+        "get_parent_3",
+        NonFragmentingChildOf_get_parent_3
+    },
+    {
+        "get_parent_4",
+        NonFragmentingChildOf_get_parent_4
+    },
+    {
+        "get_parent_5",
+        NonFragmentingChildOf_get_parent_5
+    },
+    {
+        "get_parent_6",
+        NonFragmentingChildOf_get_parent_6
+    },
+    {
+        "get_parent_7",
+        NonFragmentingChildOf_get_parent_7
+    },
+    {
+        "get_target",
+        NonFragmentingChildOf_get_target
+    },
+    {
+        "table_child_count",
+        NonFragmentingChildOf_table_child_count
+    },
+    {
+        "table_child_count_2",
+        NonFragmentingChildOf_table_child_count_2
+    },
+    {
+        "table_child_count_set_parent_after_tag",
+        NonFragmentingChildOf_table_child_count_set_parent_after_tag
+    },
+    {
+        "table_child_count_after_add",
+        NonFragmentingChildOf_table_child_count_after_add
+    },
+    {
+        "table_child_count_after_remove",
+        NonFragmentingChildOf_table_child_count_after_remove
+    },
+    {
+        "table_child_count_after_remove_all",
+        NonFragmentingChildOf_table_child_count_after_remove_all
+    },
+    {
+        "table_child_count_after_clear",
+        NonFragmentingChildOf_table_child_count_after_clear
+    },
+    {
+        "table_child_count_after_delete",
+        NonFragmentingChildOf_table_child_count_after_delete
+    },
+    {
+        "table_child_count_n_children",
+        NonFragmentingChildOf_table_child_count_n_children
+    },
+    {
+        "table_child_count_n_children_remove_parent",
+        NonFragmentingChildOf_table_child_count_n_children_remove_parent
+    },
+    {
+        "table_child_count_n_children_delete_children",
+        NonFragmentingChildOf_table_child_count_n_children_delete_children
+    },
+    {
+        "table_child_count_n_children_remove_parent_reverse",
+        NonFragmentingChildOf_table_child_count_n_children_remove_parent_reverse
+    },
+    {
+        "table_child_count_n_children_delete_children_reverse",
+        NonFragmentingChildOf_table_child_count_n_children_delete_children_reverse
+    },
+    {
+        "depth_after_parent_set",
+        NonFragmentingChildOf_depth_after_parent_set
+    },
+    {
+        "depth_after_nested_parent_set",
+        NonFragmentingChildOf_depth_after_nested_parent_set
+    },
+    {
+        "depth_after_parent_replace",
+        NonFragmentingChildOf_depth_after_parent_replace
+    },
+    {
+        "depth_after_parent_replace_different_depth",
+        NonFragmentingChildOf_depth_after_parent_replace_different_depth
+    },
+    {
+        "depth_after_parent_remove",
+        NonFragmentingChildOf_depth_after_parent_remove
+    },
+    {
+        "depth_after_parent_set_parent",
+        NonFragmentingChildOf_depth_after_parent_set_parent
+    },
+    {
+        "depth_after_parent_remove_parent",
+        NonFragmentingChildOf_depth_after_parent_remove_parent
+    },
+    {
+        "depth_after_parent_remove_other_sibling_parent",
+        NonFragmentingChildOf_depth_after_parent_remove_other_sibling_parent
+    },
+    {
+        "depth_after_parent_set_parent_sibling_traversable_no_children",
+        NonFragmentingChildOf_depth_after_parent_set_parent_sibling_traversable_no_children
+    },
+    {
+        "depth_after_parent_reparent",
+        NonFragmentingChildOf_depth_after_parent_reparent
+    },
+    {
+        "depth_after_parent_reparent_different_depth",
+        NonFragmentingChildOf_depth_after_parent_reparent_different_depth
+    },
+    {
+        "depth_after_parent_set_parent_nested",
+        NonFragmentingChildOf_depth_after_parent_set_parent_nested
+    },
+    {
+        "depth_after_parent_remove_parent_nested",
+        NonFragmentingChildOf_depth_after_parent_remove_parent_nested
+    },
+    {
+        "depth_after_parent_reparent_nested",
+        NonFragmentingChildOf_depth_after_parent_reparent_nested
+    },
+    {
+        "depth_after_parent_reparent_different_depth_nested",
+        NonFragmentingChildOf_depth_after_parent_reparent_different_depth_nested
+    },
+    {
+        "defer_delete_parent_and_base",
+        NonFragmentingChildOf_defer_delete_parent_and_base
+    },
+    {
+        "defer_delete_parent_and_tag",
+        NonFragmentingChildOf_defer_delete_parent_and_tag
+    },
+    {
+        "target_for",
+        NonFragmentingChildOf_target_for
+    },
+    {
+        "target_for_twice",
+        NonFragmentingChildOf_target_for_twice
+    },
+    {
+        "search",
+        NonFragmentingChildOf_search
+    },
+    {
+        "search_twice",
+        NonFragmentingChildOf_search_twice
+    },
+    {
+        "target_for_2_lvls_parent",
+        NonFragmentingChildOf_target_for_2_lvls_parent
+    },
+    {
+        "target_for_2_lvls_childof",
+        NonFragmentingChildOf_target_for_2_lvls_childof
+    },
+    {
+        "target_for_3_lvls_childof_childof",
+        NonFragmentingChildOf_target_for_3_lvls_childof_childof
+    },
+    {
+        "target_for_3_lvls_childof_parent",
+        NonFragmentingChildOf_target_for_3_lvls_childof_parent
+    },
+    {
+        "target_for_3_lvls_parent_childof",
+        NonFragmentingChildOf_target_for_3_lvls_parent_childof
+    },
+    {
+        "target_for_3_lvls_parent_parent",
+        NonFragmentingChildOf_target_for_3_lvls_parent_parent
+    },
+    {
+        "target_for_2_lvls_parent_parent",
+        NonFragmentingChildOf_target_for_2_lvls_parent_parent
+    },
+    {
+        "target_for_self_parent",
+        NonFragmentingChildOf_target_for_self_parent
+    },
+    {
+        "target_for_inherited",
+        NonFragmentingChildOf_target_for_inherited
+    },
+    {
+        "target_for_2_lvls_parent_inherited",
+        NonFragmentingChildOf_target_for_2_lvls_parent_inherited
+    },
+    {
+        "target_for_2_lvls_childof_inherited",
+        NonFragmentingChildOf_target_for_2_lvls_childof_inherited
+    },
+    {
+        "target_for_3_lvls_childof_childof_inherited",
+        NonFragmentingChildOf_target_for_3_lvls_childof_childof_inherited
+    },
+    {
+        "target_for_3_lvls_childof_parent_inherited",
+        NonFragmentingChildOf_target_for_3_lvls_childof_parent_inherited
+    },
+    {
+        "target_for_3_lvls_parent_childof_inherited",
+        NonFragmentingChildOf_target_for_3_lvls_parent_childof_inherited
+    },
+    {
+        "target_for_3_lvls_parent_parent_inherited",
+        NonFragmentingChildOf_target_for_3_lvls_parent_parent_inherited
+    },
+    {
+        "target_for_wildcard",
+        NonFragmentingChildOf_target_for_wildcard
+    },
+    {
+        "target_for_wildcard_2_lvls_parent",
+        NonFragmentingChildOf_target_for_wildcard_2_lvls_parent
+    },
+    {
+        "target_for_wildcard_2_lvls_childof",
+        NonFragmentingChildOf_target_for_wildcard_2_lvls_childof
+    },
+    {
+        "target_for_wildcard_3_lvls_childof_childof",
+        NonFragmentingChildOf_target_for_wildcard_3_lvls_childof_childof
+    },
+    {
+        "target_for_wildcard_3_lvls_childof_parent",
+        NonFragmentingChildOf_target_for_wildcard_3_lvls_childof_parent
+    },
+    {
+        "target_for_wildcard_3_lvls_parent_childof",
+        NonFragmentingChildOf_target_for_wildcard_3_lvls_parent_childof
+    },
+    {
+        "target_for_wildcard_3_lvls_parent_parent",
+        NonFragmentingChildOf_target_for_wildcard_3_lvls_parent_parent
+    },
+    {
+        "parent_has_traversable_flag",
+        NonFragmentingChildOf_parent_has_traversable_flag
+    },
+    {
+        "get_2_ordered_children",
+        NonFragmentingChildOf_get_2_ordered_children
+    },
+    {
+        "get_2_ordered_children_mixed",
+        NonFragmentingChildOf_get_2_ordered_children_mixed
+    },
+    {
+        "get_2_ordered_children_mixed_2",
+        NonFragmentingChildOf_get_2_ordered_children_mixed_2
+    },
+    {
+        "3_levels_2_children",
+        NonFragmentingChildOf_3_levels_2_children
+    },
+    {
+        "3_levels_2_children_cleanup_order_after_delete",
+        NonFragmentingChildOf_3_levels_2_children_cleanup_order_after_delete
+    },
+    {
+        "3_levels_2_children_cleanup_order_after_fini",
+        NonFragmentingChildOf_3_levels_2_children_cleanup_order_after_fini
+    },
+    {
+        "named_children_same_table_w_same_name",
+        NonFragmentingChildOf_named_children_same_table_w_same_name
+    },
+    {
+        "add_parent_to_entity_w_component",
+        NonFragmentingChildOf_add_parent_to_entity_w_component
+    },
+    {
+        "add_parent_to_prefab",
+        NonFragmentingChildOf_add_parent_to_prefab
+    },
+    {
+        "add_parent_to_prefab_after_add_parent",
+        NonFragmentingChildOf_add_parent_to_prefab_after_add_parent
+    },
+    {
+        "reparent_to_prefab",
+        NonFragmentingChildOf_reparent_to_prefab
+    },
+    {
+        "lookup",
+        NonFragmentingChildOf_lookup
+    },
+    {
+        "lookup_2_lvls",
+        NonFragmentingChildOf_lookup_2_lvls
+    },
+    {
+        "lookup_from",
+        NonFragmentingChildOf_lookup_from
+    },
+    {
+        "lookup_from_2_lvls",
+        NonFragmentingChildOf_lookup_from_2_lvls
+    },
+    {
+        "lookup_after_reparent",
+        NonFragmentingChildOf_lookup_after_reparent
+    },
+    {
+        "lookup_after_remove_parent",
+        NonFragmentingChildOf_lookup_after_remove_parent
+    },
+    {
+        "lookup_after_clear",
+        NonFragmentingChildOf_lookup_after_clear
+    },
+    {
+        "lookup_after_delete",
+        NonFragmentingChildOf_lookup_after_delete
+    },
+    {
+        "set_name_after_create",
+        NonFragmentingChildOf_set_name_after_create
+    },
+    {
+        "deep_hierarchy",
+        NonFragmentingChildOf_deep_hierarchy
+    },
+    {
+        "create_delete_mixed_tree",
+        NonFragmentingChildOf_create_delete_mixed_tree
+    },
+    {
+        "create_delete_tree_w_tgt_of_other_rel_1",
+        NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_1
+    },
+    {
+        "create_delete_tree_w_tgt_of_other_rel_2",
+        NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_2
+    },
+    {
+        "create_delete_tree_w_tgt_of_other_rel_3",
+        NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_3
+    },
+    {
+        "create_delete_tree_w_tgt_of_other_rel_4",
+        NonFragmentingChildOf_create_delete_tree_w_tgt_of_other_rel_4
+    },
+    {
+        "prefab_child_has_prefab_w_insert",
+        NonFragmentingChildOf_prefab_child_has_prefab_w_insert
+    },
+    {
+        "prefab_child_has_prefab_w_new_child",
+        NonFragmentingChildOf_prefab_child_has_prefab_w_new_child
+    },
+    {
+        "prefab_child_has_prefab_w_set",
+        NonFragmentingChildOf_prefab_child_has_prefab_w_set
+    },
+    {
+        "prefab_child_nested_has_prefab_w_insert",
+        NonFragmentingChildOf_prefab_child_nested_has_prefab_w_insert
+    },
+    {
+        "prefab_child_nested_has_prefab_w_new_child",
+        NonFragmentingChildOf_prefab_child_nested_has_prefab_w_new_child
+    },
+    {
+        "prefab_child_nested_has_prefab_w_set",
+        NonFragmentingChildOf_prefab_child_nested_has_prefab_w_set
+    },
+    {
+        "prefab_variant_w_children",
+        NonFragmentingChildOf_prefab_variant_w_children
+    },
+    {
+        "prefab_variant_w_nested_children",
+        NonFragmentingChildOf_prefab_variant_w_nested_children
+    },
+    {
+        "instantiate_tree_1_child",
+        NonFragmentingChildOf_instantiate_tree_1_child
+    },
+    {
+        "instantiate_tree_2_children",
+        NonFragmentingChildOf_instantiate_tree_2_children
+    },
+    {
+        "instantiate_tree_3_children",
+        NonFragmentingChildOf_instantiate_tree_3_children
+    },
+    {
+        "instantiate_tree_w_on_set_up_childof_observer_crash",
+        NonFragmentingChildOf_instantiate_tree_w_on_set_up_childof_observer_crash
+    },
+    {
+        "instantiate_w_dont_inherit",
+        NonFragmentingChildOf_instantiate_w_dont_inherit
+    },
+    {
+        "instantiate_w_inherit",
+        NonFragmentingChildOf_instantiate_w_inherit
+    },
+    {
+        "instantiate_w_auto_override",
+        NonFragmentingChildOf_instantiate_w_auto_override
+    },
+    {
+        "instantiate_w_isa",
+        NonFragmentingChildOf_instantiate_w_isa
+    },
+    {
+        "instantiate_tree_twice",
+        NonFragmentingChildOf_instantiate_tree_twice
+    },
+    {
+        "instantiate_tree_twice_different_table",
+        NonFragmentingChildOf_instantiate_tree_twice_different_table
+    },
+    {
+        "instantiate_tree_at_depth_1_w_parent",
+        NonFragmentingChildOf_instantiate_tree_at_depth_1_w_parent
+    },
+    {
+        "instantiate_tree_at_depth_2_w_parent",
+        NonFragmentingChildOf_instantiate_tree_at_depth_2_w_parent
+    },
+    {
+        "instantiate_tree_at_depth_n_w_parent",
+        NonFragmentingChildOf_instantiate_tree_at_depth_n_w_parent
+    },
+    {
+        "instantiate_tree_at_depth_1_w_childof",
+        NonFragmentingChildOf_instantiate_tree_at_depth_1_w_childof
+    },
+    {
+        "instantiate_tree_at_depth_2_w_childof",
+        NonFragmentingChildOf_instantiate_tree_at_depth_2_w_childof
+    },
+    {
+        "instantiate_tree_at_depth_n_w_childof",
+        NonFragmentingChildOf_instantiate_tree_at_depth_n_w_childof
+    },
+    {
+        "reparent_instantiated_tree_w_parent",
+        NonFragmentingChildOf_reparent_instantiated_tree_w_parent
+    },
+    {
+        "reparent_instantiated_tree_w_childof",
+        NonFragmentingChildOf_reparent_instantiated_tree_w_childof
+    },
+    {
+        "instantiate_instance_after_remove_all_tag",
+        NonFragmentingChildOf_instantiate_instance_after_remove_all_tag
+    },
+    {
+        "instantiate_instance_after_delete_with_tag",
+        NonFragmentingChildOf_instantiate_instance_after_delete_with_tag
+    },
+    {
+        "instantiate_instance_after_shrink",
+        NonFragmentingChildOf_instantiate_instance_after_shrink
+    },
+    {
+        "instantiate_instance_after_delete_empty_tables",
+        NonFragmentingChildOf_instantiate_instance_after_delete_empty_tables
+    },
+    {
+        "get_instance_child_from_prefab",
+        NonFragmentingChildOf_get_instance_child_from_prefab
+    },
+    {
+        "get_instance_child_from_prefab_variant",
+        NonFragmentingChildOf_get_instance_child_from_prefab_variant
+    },
+    {
+        "named_prefab_hierarchy",
+        NonFragmentingChildOf_named_prefab_hierarchy
+    },
+    {
+        "named_prefab_variant_hierarchy",
+        NonFragmentingChildOf_named_prefab_variant_hierarchy
+    },
+    {
+        "named_prefab_hierarchy_new_w_parent",
+        NonFragmentingChildOf_named_prefab_hierarchy_new_w_parent
+    },
+    {
+        "named_prefab_variant_hierarchy_new_w_parent",
+        NonFragmentingChildOf_named_prefab_variant_hierarchy_new_w_parent
+    },
+    {
+        "delete_with_parent",
+        NonFragmentingChildOf_delete_with_parent
+    },
+    {
+        "delete_with_parent_nested",
+        NonFragmentingChildOf_delete_with_parent_nested
+    },
+    {
+        "delete_with_parent_nested_2",
+        NonFragmentingChildOf_delete_with_parent_nested_2
+    },
+    {
+        "delete_with_parent_nested_3",
+        NonFragmentingChildOf_delete_with_parent_nested_3
+    },
+    {
+        "delete_with_parent_nested_4",
+        NonFragmentingChildOf_delete_with_parent_nested_4
+    },
+    {
+        "delete_with_parent_w_up_observer",
+        NonFragmentingChildOf_delete_with_parent_w_up_observer
+    },
+    {
+        "delete_with_parent_nested_w_up_observer",
+        NonFragmentingChildOf_delete_with_parent_nested_w_up_observer
+    },
+    {
+        "delete_with_parent_mixed_nested_w_up_observer",
+        NonFragmentingChildOf_delete_with_parent_mixed_nested_w_up_observer
+    },
+    {
+        "delete_tree_1",
+        NonFragmentingChildOf_delete_tree_1
+    },
+    {
+        "delete_tree_2",
+        NonFragmentingChildOf_delete_tree_2
+    },
+    {
+        "delete_tree_3",
+        NonFragmentingChildOf_delete_tree_3
+    },
+    {
+        "delete_tree_4",
+        NonFragmentingChildOf_delete_tree_4
+    },
+    {
+        "delete_tree_5",
+        NonFragmentingChildOf_delete_tree_5
+    },
+    {
+        "delete_tree_6",
+        NonFragmentingChildOf_delete_tree_6
+    },
+    {
+        "delete_tree_7",
+        NonFragmentingChildOf_delete_tree_7
+    },
+    {
+        "add_parent_to_childof_child",
+        NonFragmentingChildOf_add_parent_to_childof_child
+    },
+    {
+        "add_childof_to_parent_child",
+        NonFragmentingChildOf_add_childof_to_parent_child
+    },
+    {
+        "add_parent_to_childof_child_same_parent",
+        NonFragmentingChildOf_add_parent_to_childof_child_same_parent
+    },
+    {
+        "add_childof_to_parent_child_same_parent",
+        NonFragmentingChildOf_add_childof_to_parent_child_same_parent
+    },
+    {
+        "new_w_parent_w_same_name_twice",
+        NonFragmentingChildOf_new_w_parent_w_same_name_twice
+    },
+    {
+        "defer_new_w_parent",
+        NonFragmentingChildOf_defer_new_w_parent
+    },
+    {
+        "defer_new_w_parent_w_name",
+        NonFragmentingChildOf_defer_new_w_parent_w_name
+    },
+    {
+        "defer_new_w_parent_w_same_name_twice",
+        NonFragmentingChildOf_defer_new_w_parent_w_same_name_twice
+    },
+    {
+        "new_w_parent_from_stage",
+        NonFragmentingChildOf_new_w_parent_from_stage
+    },
+    {
+        "new_w_parent_w_name_from_stage",
+        NonFragmentingChildOf_new_w_parent_w_name_from_stage
+    },
+    {
+        "prefab_instance_w_dont_fragment_tag",
+        NonFragmentingChildOf_prefab_instance_w_dont_fragment_tag
+    },
+    {
+        "prefab_instance_w_dont_fragment_component",
+        NonFragmentingChildOf_prefab_instance_w_dont_fragment_component
+    },
+    {
+        "prefab_instance_w_inherit_dont_fragment_component",
+        NonFragmentingChildOf_prefab_instance_w_inherit_dont_fragment_component
+    },
+    {
+        "instantiate_recycled_prefab",
+        NonFragmentingChildOf_instantiate_recycled_prefab
+    },
+    {
+        "defer_set_parent_batched",
+        NonFragmentingChildOf_defer_set_parent_batched
+    },
+    {
+        "defer_new_w_parent_batched",
+        NonFragmentingChildOf_defer_new_w_parent_batched
+    },
+    {
+        "defer_set_after_remove_instance",
+        NonFragmentingChildOf_defer_set_after_remove_instance
+    },
+    {
+        "delete_parent_w_n_children_after_delete_1_child",
+        NonFragmentingChildOf_delete_parent_w_n_children_after_delete_1_child
+    },
+    {
+        "prefab_1_child_offset_id",
+        NonFragmentingChildOf_prefab_1_child_offset_id
+    },
+    {
+        "prefab_2_children_offset_id",
+        NonFragmentingChildOf_prefab_2_children_offset_id
+    },
+    {
+        "prefab_3_children_offset_id",
+        NonFragmentingChildOf_prefab_3_children_offset_id
+    },
+    {
+        "prefab_2_children_2_types_offset_id",
+        NonFragmentingChildOf_prefab_2_children_2_types_offset_id
+    },
+    {
+        "prefab_3_children_3_types_offset_id",
+        NonFragmentingChildOf_prefab_3_children_3_types_offset_id
+    },
+    {
+        "prefab_2_children_2_types_reverse_offset_id",
+        NonFragmentingChildOf_prefab_2_children_2_types_reverse_offset_id
+    },
+    {
+        "prefab_3_children_3_types_reverse_offset_id",
+        NonFragmentingChildOf_prefab_3_children_3_types_reverse_offset_id
+    },
+    {
+        "prefab_2_lvl_nested_children_offset_id",
+        NonFragmentingChildOf_prefab_2_lvl_nested_children_offset_id
+    },
+    {
+        "prefab_3_lvl_nested_children_offset_id",
+        NonFragmentingChildOf_prefab_3_lvl_nested_children_offset_id
+    },
+    {
+        "prefab_recycled_children_offset_id",
+        NonFragmentingChildOf_prefab_recycled_children_offset_id
+    },
+    {
+        "prefab_recycled_instance_offset_id",
+        NonFragmentingChildOf_prefab_recycled_instance_offset_id
+    },
+    {
+        "prefab_children_recycled_offset_id",
+        NonFragmentingChildOf_prefab_children_recycled_offset_id
+    },
+    {
+        "prefab_recycled_children_recycled_offset_id",
+        NonFragmentingChildOf_prefab_recycled_children_recycled_offset_id
+    },
+    {
+        "prefab_recycled_children_recycled_offset_id_different_generation",
+        NonFragmentingChildOf_prefab_recycled_children_recycled_offset_id_different_generation
+    },
+    {
+        "prefab_1_child_offset_id_occupied",
+        NonFragmentingChildOf_prefab_1_child_offset_id_occupied
+    },
+    {
+        "prefab_1_child_offset_id_recycled_occupied",
+        NonFragmentingChildOf_prefab_1_child_offset_id_recycled_occupied
+    },
+    {
+        "prefab_child_offset_w_smaller_child_id",
+        NonFragmentingChildOf_prefab_child_offset_w_smaller_child_id
+    },
+    {
+        "prefab_ordered_children_1_child_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_1_child_offset_id
+    },
+    {
+        "prefab_ordered_children_2_children_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_2_children_offset_id
+    },
+    {
+        "prefab_ordered_children_3_children_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_3_children_offset_id
+    },
+    {
+        "prefab_ordered_children_2_children_2_types_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_2_children_2_types_offset_id
+    },
+    {
+        "prefab_ordered_children_3_children_3_types_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_3_children_3_types_offset_id
+    },
+    {
+        "prefab_ordered_children_2_children_2_types_reverse_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_2_children_2_types_reverse_offset_id
+    },
+    {
+        "prefab_ordered_children_3_children_3_types_reverse_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_3_children_3_types_reverse_offset_id
+    },
+    {
+        "prefab_ordered_children_2_lvl_nested_children_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_2_lvl_nested_children_offset_id
+    },
+    {
+        "prefab_ordered_children_3_lvl_nested_children_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_3_lvl_nested_children_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_children_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_recycled_children_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_instance_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_recycled_instance_offset_id
+    },
+    {
+        "prefab_ordered_children_children_recycled_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_children_recycled_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_children_recycled_offset_id",
+        NonFragmentingChildOf_prefab_ordered_children_recycled_children_recycled_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_children_recycled_offset_id_different_generation",
+        NonFragmentingChildOf_prefab_ordered_children_recycled_children_recycled_offset_id_different_generation
+    },
+    {
+        "prefab_ordered_children_1_child_offset_id_occupied",
+        NonFragmentingChildOf_prefab_ordered_children_1_child_offset_id_occupied
+    },
+    {
+        "prefab_ordered_children_1_child_offset_id_recycled_occupied",
+        NonFragmentingChildOf_prefab_ordered_children_1_child_offset_id_recycled_occupied
+    },
+    {
+        "prefab_ordered_children_child_offset_w_smaller_child_id",
+        NonFragmentingChildOf_prefab_ordered_children_child_offset_w_smaller_child_id
+    },
+    {
+        "defer_set_parent_to_deleted",
+        NonFragmentingChildOf_defer_set_parent_to_deleted
+    },
+    {
+        "defer_set_parent_to_deleted_batched",
+        NonFragmentingChildOf_defer_set_parent_to_deleted_batched
+    },
+    {
+        "defer_set_parent_to_deleted_w_on_remove",
+        NonFragmentingChildOf_defer_set_parent_to_deleted_w_on_remove
+    },
+    {
+        "defer_set_parent_to_deleted_batched_w_on_remove",
+        NonFragmentingChildOf_defer_set_parent_to_deleted_batched_w_on_remove
+    },
+    {
+        "defer_set_existing_parent_to_deleted",
+        NonFragmentingChildOf_defer_set_existing_parent_to_deleted
+    },
+    {
+        "defer_set_existing_parent_to_deleted_batched",
+        NonFragmentingChildOf_defer_set_existing_parent_to_deleted_batched
+    },
+    {
+        "defer_remove_set_parent_different_stages",
+        NonFragmentingChildOf_defer_remove_set_parent_different_stages
+    },
+    {
+        "defer_remove_set_parent_different_stages_batched",
+        NonFragmentingChildOf_defer_remove_set_parent_different_stages_batched
+    },
+    {
+        "defer_remove_set_parent_different_stages_w_observer",
+        NonFragmentingChildOf_defer_remove_set_parent_different_stages_w_observer
+    },
+    {
+        "defer_reparent_to_deleted_parent",
+        NonFragmentingChildOf_defer_reparent_to_deleted_parent
+    },
+    {
+        "delete_mixed_tree_1",
+        NonFragmentingChildOf_delete_mixed_tree_1
+    },
+    {
+        "delete_mixed_tree_2",
+        NonFragmentingChildOf_delete_mixed_tree_2
+    },
+    {
+        "delete_mixed_tree_3",
+        NonFragmentingChildOf_delete_mixed_tree_3
+    },
+    {
+        "delete_mixed_tree_4",
+        NonFragmentingChildOf_delete_mixed_tree_4
+    },
+    {
+        "delete_mixed_tree_5",
+        NonFragmentingChildOf_delete_mixed_tree_5
+    },
+    {
+        "instantiate_parent_w_has_in_hook",
+        NonFragmentingChildOf_instantiate_parent_w_has_in_hook
+    },
+    {
+        "add_prefab_tag_after_hierarchy_creation",
+        NonFragmentingChildOf_add_prefab_tag_after_hierarchy_creation
+    },
+    {
+        "defer_add_prefab_tag_after_hierarchy_creation",
+        NonFragmentingChildOf_defer_add_prefab_tag_after_hierarchy_creation
+    },
+    {
+        "add_prefab_tag_after_hierarchy_creation_2",
+        NonFragmentingChildOf_add_prefab_tag_after_hierarchy_creation_2
+    },
+    {
+        "defer_add_prefab_tag_after_hierarchy_creation_2",
+        NonFragmentingChildOf_defer_add_prefab_tag_after_hierarchy_creation_2
     }
 };
 
@@ -5389,6 +6974,10 @@ bake_test_case Hierarchies_testcases[] = {
     {
         "get_parent_from_nested_2",
         Hierarchies_get_parent_from_nested_2
+    },
+    {
+        "get_target_negative_index",
+        Hierarchies_get_target_negative_index
     },
     {
         "get_object_from_0",
@@ -5954,8 +7543,28 @@ bake_test_case OrderedChildren_testcases[] = {
         OrderedChildren_get_ordered_children_from_prefab_instance_3_children
     },
     {
+        "get_ordered_children_from_prefab_instance_3_children_different_table",
+        OrderedChildren_get_ordered_children_from_prefab_instance_3_children_different_table
+    },
+    {
         "get_ordered_children_from_prefab_instance_nested_children",
         OrderedChildren_get_ordered_children_from_prefab_instance_nested_children
+    },
+    {
+        "prefab_w_nested_ordered_children",
+        OrderedChildren_prefab_w_nested_ordered_children
+    },
+    {
+        "prefab_w_nested_ordered_children_2",
+        OrderedChildren_prefab_w_nested_ordered_children_2
+    },
+    {
+        "prefab_w_slots",
+        OrderedChildren_prefab_w_slots
+    },
+    {
+        "prefab_get_target_after_reorder",
+        OrderedChildren_prefab_get_target_after_reorder
     },
     {
         "recreate_named_child",
@@ -5968,6 +7577,18 @@ bake_test_case OrderedChildren_testcases[] = {
     {
         "lookup_after_clear",
         OrderedChildren_lookup_after_clear
+    },
+    {
+        "bulk_create_ordered_children",
+        OrderedChildren_bulk_create_ordered_children
+    },
+    {
+        "get_ordered_children_from_prefab_instance_nested_children",
+        OrderedChildren_get_ordered_children_from_prefab_instance_nested_children
+    },
+    {
+        "ordered_children_parent_is_traversable",
+        OrderedChildren_ordered_children_parent_is_traversable
     }
 };
 
@@ -6043,6 +7664,22 @@ bake_test_case Has_testcases[] = {
     {
         "has_wildcard_pair",
         Has_has_wildcard_pair
+    },
+    {
+        "has_childof_w_parent",
+        Has_has_childof_w_parent
+    },
+    {
+        "has_childof_wildcard_w_parent",
+        Has_has_childof_wildcard_w_parent
+    },
+    {
+        "owns_childof_w_parent",
+        Has_owns_childof_w_parent
+    },
+    {
+        "owns_childof_wildcard_w_parent",
+        Has_owns_childof_wildcard_w_parent
     }
 };
 
@@ -6168,6 +7805,10 @@ bake_test_case Reference_testcases[] = {
     {
         "get_ref_after_clear",
         Reference_get_ref_after_clear
+    },
+    {
+        "get_ref_after_clear_table",
+        Reference_get_ref_after_clear_table
     },
     {
         "get_ref_after_clear_other",
@@ -7315,6 +8956,10 @@ bake_test_case Lookup_testcases[] = {
     {
         "lookup_path_65_chars",
         Lookup_lookup_path_65_chars
+    },
+    {
+        "lookup_malformed",
+        Lookup_lookup_malformed
     }
 };
 
@@ -7437,6 +9082,22 @@ bake_test_case Clone_testcases[] = {
     {
         "clone_w_name",
         Clone_clone_w_name
+    },
+    {
+        "clone_component",
+        Clone_clone_component
+    },
+    {
+        "clone_component_w_value",
+        Clone_clone_component_w_value
+    },
+    {
+        "clone_component_w_entity",
+        Clone_clone_component_w_entity
+    },
+    {
+        "clone_component_w_entity_w_value",
+        Clone_clone_component_w_entity_w_value
     }
 };
 
@@ -7968,6 +9629,30 @@ bake_test_case ComponentLifecycle_testcases[] = {
     {
         "shrink",
         ComponentLifecycle_shrink
+    },
+    {
+        "dtor_after_add_exclusive_component",
+        ComponentLifecycle_dtor_after_add_exclusive_component
+    },
+    {
+        "dtor_after_add_exclusive_component_last",
+        ComponentLifecycle_dtor_after_add_exclusive_component_last
+    },
+    {
+        "has_in_on_add_hook_new",
+        ComponentLifecycle_has_in_on_add_hook_new
+    },
+    {
+        "has_in_on_add_hook_move",
+        ComponentLifecycle_has_in_on_add_hook_move
+    },
+    {
+        "get_in_on_add_hook_new",
+        ComponentLifecycle_get_in_on_add_hook_new
+    },
+    {
+        "get_in_on_add_hook_move",
+        ComponentLifecycle_get_in_on_add_hook_move
     }
 };
 
@@ -8473,8 +10158,48 @@ bake_test_case Pairs_testcases[] = {
         Pairs_force_target_on_target
     },
     {
+        "disable_w_toggle_pair_rel_target_traits",
+        Pairs_disable_w_toggle_pair_rel_target_traits
+    },
+    {
         "relationship_with_exclusive",
         Pairs_relationship_with_exclusive
+    },
+    {
+        "add_value_pair",
+        Pairs_add_value_pair
+    },
+    {
+        "add_value_pairs",
+        Pairs_add_value_pairs
+    },
+    {
+        "add_exclusive_value_pairs",
+        Pairs_add_exclusive_value_pairs
+    },
+    {
+        "remove_value_pairs_wildcard",
+        Pairs_remove_value_pairs_wildcard
+    },
+    {
+        "value_pair_to_str",
+        Pairs_value_pair_to_str
+    },
+    {
+        "has_value_pair_wildcard",
+        Pairs_has_value_pair_wildcard
+    },
+    {
+        "has_value_pair_any",
+        Pairs_has_value_pair_any
+    },
+    {
+        "target_w_value_pair",
+        Pairs_target_w_value_pair
+    },
+    {
+        "inherit_relationship_trait",
+        Pairs_inherit_relationship_trait
     }
 };
 
@@ -9527,6 +11252,22 @@ bake_test_case Observer_testcases[] = {
         Observer_emit_for_parent_w_prefab_child_and_instance
     },
     {
+        "query_eval_w_component_that_triggered_observer",
+        Observer_query_eval_w_component_that_triggered_observer
+    },
+    {
+        "query_eval_w_pair_first_var_that_triggered_observer",
+        Observer_query_eval_w_pair_first_var_that_triggered_observer
+    },
+    {
+        "query_eval_w_pair_second_var_that_triggered_observer",
+        Observer_query_eval_w_pair_second_var_that_triggered_observer
+    },
+    {
+        "query_eval_w_pair_both_vars_that_triggered_observer",
+        Observer_query_eval_w_pair_both_vars_that_triggered_observer
+    },
+    {
         "observer_w_2_fixed_src",
         Observer_observer_w_2_fixed_src
     },
@@ -10069,6 +11810,146 @@ bake_test_case Observer_testcases[] = {
     {
         "2_on_set_overridden_terms_field_size_w_tag",
         Observer_2_on_set_overridden_terms_field_size_w_tag
+    },
+    {
+        "create_observer_in_observer",
+        Observer_create_observer_in_observer
+    },
+    {
+        "on_add_childof_w_parent_component",
+        Observer_on_add_childof_w_parent_component
+    },
+    {
+        "on_add_childof_w_parent_component_observer_after_table",
+        Observer_on_add_childof_w_parent_component_observer_after_table
+    },
+    {
+        "on_add_childof_wildcard_w_parent_component",
+        Observer_on_add_childof_wildcard_w_parent_component
+    },
+    {
+        "on_add_childof_any_w_parent_component",
+        Observer_on_add_childof_any_w_parent_component
+    },
+    {
+        "on_remove_childof_w_parent_component",
+        Observer_on_remove_childof_w_parent_component
+    },
+    {
+        "on_add_childof_w_parent_component_multi_term",
+        Observer_on_add_childof_w_parent_component_multi_term
+    },
+    {
+        "on_add_childof_wildcard_w_parent_component_multi_term",
+        Observer_on_add_childof_wildcard_w_parent_component_multi_term
+    },
+    {
+        "on_add_childof_wildcard_w_parent_component_multi_term_after_shrink",
+        Observer_on_add_childof_wildcard_w_parent_component_multi_term_after_shrink
+    },
+    {
+        "on_add_childof_wildcard_w_parent_component_multi_term_delete_observer",
+        Observer_on_add_childof_wildcard_w_parent_component_multi_term_delete_observer
+    },
+    {
+        "on_add_childof_any_w_parent_component_multi_term",
+        Observer_on_add_childof_any_w_parent_component_multi_term
+    },
+    {
+        "on_remove_childof_w_parent_component_multi_term",
+        Observer_on_remove_childof_w_parent_component_multi_term
+    },
+    {
+        "up_forward_w_parent_component",
+        Observer_up_forward_w_parent_component
+    },
+    {
+        "up_propagate_w_parent_component",
+        Observer_up_propagate_w_parent_component
+    },
+    {
+        "up_forward_w_parent_component_2_levels",
+        Observer_up_forward_w_parent_component_2_levels
+    },
+    {
+        "up_forward_w_parent_component_2_levels_reverse",
+        Observer_up_forward_w_parent_component_2_levels_reverse
+    },
+    {
+        "up_propagate_w_parent_component_2_levels",
+        Observer_up_propagate_w_parent_component_2_levels
+    },
+    {
+        "up_forward_w_parent_component_2_levels_mixed_1",
+        Observer_up_forward_w_parent_component_2_levels_mixed_1
+    },
+    {
+        "up_forward_w_parent_component_2_levels_mixed_2",
+        Observer_up_forward_w_parent_component_2_levels_mixed_2
+    },
+    {
+        "up_propagate_w_parent_component_2_levels_mixed_1",
+        Observer_up_propagate_w_parent_component_2_levels_mixed_1
+    },
+    {
+        "up_propagate_w_parent_component_2_levels_mixed_2",
+        Observer_up_propagate_w_parent_component_2_levels_mixed_2
+    },
+    {
+        "self_up_forward_w_parent_component",
+        Observer_self_up_forward_w_parent_component
+    },
+    {
+        "self_up_propagate_w_parent_component",
+        Observer_self_up_propagate_w_parent_component
+    },
+    {
+        "self_up_forward_w_parent_component_2_levels",
+        Observer_self_up_forward_w_parent_component_2_levels
+    },
+    {
+        "self_up_forward_w_parent_component_2_levels_reverse",
+        Observer_self_up_forward_w_parent_component_2_levels_reverse
+    },
+    {
+        "self_up_propagate_w_parent_component_2_levels",
+        Observer_self_up_propagate_w_parent_component_2_levels
+    },
+    {
+        "self_up_forward_w_parent_component_2_levels_mixed_1",
+        Observer_self_up_forward_w_parent_component_2_levels_mixed_1
+    },
+    {
+        "self_up_forward_w_parent_component_2_levels_mixed_2",
+        Observer_self_up_forward_w_parent_component_2_levels_mixed_2
+    },
+    {
+        "self_up_propagate_w_parent_component_2_levels_mixed_1",
+        Observer_self_up_propagate_w_parent_component_2_levels_mixed_1
+    },
+    {
+        "self_up_propagate_w_parent_component_2_levels_mixed_2",
+        Observer_self_up_propagate_w_parent_component_2_levels_mixed_2
+    },
+    {
+        "up_forward_w_parent_component_reparent",
+        Observer_up_forward_w_parent_component_reparent
+    },
+    {
+        "self_up_forward_w_parent_component_reparent",
+        Observer_self_up_forward_w_parent_component_reparent
+    },
+    {
+        "up_propagate_w_parent_component_on_set",
+        Observer_up_propagate_w_parent_component_on_set
+    },
+    {
+        "self_up_propagate_w_parent_component_on_set",
+        Observer_self_up_propagate_w_parent_component_on_set
+    },
+    {
+        "parent_on_set_w_exclusive_pair",
+        Observer_parent_on_set_w_exclusive_pair
     },
     {
         "cache_test_1",
@@ -11185,6 +13066,74 @@ bake_test_case Prefab_testcases[] = {
         Prefab_prefab_child_offset_w_smaller_child_id
     },
     {
+        "prefab_ordered_children_1_child_offset_id",
+        Prefab_prefab_ordered_children_1_child_offset_id
+    },
+    {
+        "prefab_ordered_children_2_children_offset_id",
+        Prefab_prefab_ordered_children_2_children_offset_id
+    },
+    {
+        "prefab_ordered_children_3_children_offset_id",
+        Prefab_prefab_ordered_children_3_children_offset_id
+    },
+    {
+        "prefab_ordered_children_2_children_2_types_offset_id",
+        Prefab_prefab_ordered_children_2_children_2_types_offset_id
+    },
+    {
+        "prefab_ordered_children_3_children_3_types_offset_id",
+        Prefab_prefab_ordered_children_3_children_3_types_offset_id
+    },
+    {
+        "prefab_ordered_children_2_children_2_types_reverse_offset_id",
+        Prefab_prefab_ordered_children_2_children_2_types_reverse_offset_id
+    },
+    {
+        "prefab_ordered_children_3_children_3_types_reverse_offset_id",
+        Prefab_prefab_ordered_children_3_children_3_types_reverse_offset_id
+    },
+    {
+        "prefab_ordered_children_2_lvl_nested_children_offset_id",
+        Prefab_prefab_ordered_children_2_lvl_nested_children_offset_id
+    },
+    {
+        "prefab_ordered_children_3_lvl_nested_children_offset_id",
+        Prefab_prefab_ordered_children_3_lvl_nested_children_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_children_offset_id",
+        Prefab_prefab_ordered_children_recycled_children_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_instance_offset_id",
+        Prefab_prefab_ordered_children_recycled_instance_offset_id
+    },
+    {
+        "prefab_ordered_children_children_recycled_offset_id",
+        Prefab_prefab_ordered_children_children_recycled_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_children_recycled_offset_id",
+        Prefab_prefab_ordered_children_recycled_children_recycled_offset_id
+    },
+    {
+        "prefab_ordered_children_recycled_children_recycled_offset_id_different_generation",
+        Prefab_prefab_ordered_children_recycled_children_recycled_offset_id_different_generation
+    },
+    {
+        "prefab_ordered_children_1_child_offset_id_occupied",
+        Prefab_prefab_ordered_children_1_child_offset_id_occupied
+    },
+    {
+        "prefab_ordered_children_1_child_offset_id_recycled_occupied",
+        Prefab_prefab_ordered_children_1_child_offset_id_recycled_occupied
+    },
+    {
+        "prefab_ordered_children_child_offset_w_smaller_child_id",
+        Prefab_prefab_ordered_children_child_offset_w_smaller_child_id
+    },
+    {
         "prefab_w_union",
         Prefab_prefab_w_union
     },
@@ -11263,6 +13212,22 @@ bake_test_case Prefab_testcases[] = {
     {
         "create_instances_w_override_and_on_set",
         Prefab_create_instances_w_override_and_on_set
+    },
+    {
+        "remove_all",
+        Prefab_remove_all
+    },
+    {
+        "delete_with",
+        Prefab_delete_with
+    },
+    {
+        "prefab_children_after_adding_prefab",
+        Prefab_prefab_children_after_adding_prefab
+    },
+    {
+        "add_base_w_exclusive_override",
+        Prefab_add_base_w_exclusive_override
     }
 };
 
@@ -11648,6 +13613,10 @@ bake_test_case World_testcases[] = {
         World_delete_empty_component_record_w_shrink
     },
     {
+        "delete_empty_hi_component_record_w_shrink",
+        World_delete_empty_hi_component_record_w_shrink
+    },
+    {
         "delete_empty_queried_for_component_record_w_shrink",
         World_delete_empty_queried_for_component_record_w_shrink
     },
@@ -11674,6 +13643,14 @@ bake_test_case World_testcases[] = {
     {
         "dont_delete_non_empty_dont_fragment_component_record_w_shrink",
         World_dont_delete_non_empty_dont_fragment_component_record_w_shrink
+    },
+    {
+        "remove_from_traversable_after_shrink",
+        World_remove_from_traversable_after_shrink
+    },
+    {
+        "shrink_non_fragmenting_childof",
+        World_shrink_non_fragmenting_childof
     },
     {
         "mini_all_tables_builtin",
@@ -11866,6 +13843,10 @@ bake_test_case World_testcases[] = {
     {
         "add_traversable_after_pair_query",
         World_add_traversable_after_pair_query
+    },
+    {
+        "set_component_after_in_use",
+        World_set_component_after_in_use
     }
 };
 
@@ -12455,6 +14436,14 @@ bake_test_case Type_testcases[] = {
 };
 
 bake_test_case Commands_testcases[] = {
+    {
+        "is_deferred",
+        Commands_is_deferred
+    },
+    {
+        "is_defer_suspended",
+        Commands_is_defer_suspended
+    },
     {
         "defer_new",
         Commands_defer_new
@@ -13126,6 +15115,26 @@ bake_test_case Commands_testcases[] = {
     {
         "on_replace_w_set_batched_existing_twice",
         Commands_on_replace_w_set_batched_existing_twice
+    },
+    {
+        "set_existing_after_remove",
+        Commands_set_existing_after_remove
+    },
+    {
+        "set_existing_after_remove_move_table",
+        Commands_set_existing_after_remove_move_table
+    },
+    {
+        "set_existing_after_remove_w_is_a",
+        Commands_set_existing_after_remove_w_is_a
+    },
+    {
+        "set_existing_after_remove_w_is_a_move_table",
+        Commands_set_existing_after_remove_w_is_a_move_table
+    },
+    {
+        "set_existing_after_remove_2_stages",
+        Commands_set_existing_after_remove_2_stages
     }
 };
 
@@ -13557,6 +15566,10 @@ bake_test_case Table_testcases[] = {
         Table_has_any_pair
     },
     {
+        "get_target_out_of_range",
+        Table_get_target_out_of_range
+    },
+    {
         "clear_table_kills_entities",
         Table_clear_table_kills_entities
     },
@@ -13687,6 +15700,94 @@ bake_test_case Internals_testcases[] = {
         Internals_childof_tgt_exists_after_query
     },
     {
+        "component_record_depth_root",
+        Internals_component_record_depth_root
+    },
+    {
+        "component_record_depth_parent",
+        Internals_component_record_depth_parent
+    },
+    {
+        "component_record_depth_nested_parent",
+        Internals_component_record_depth_nested_parent
+    },
+    {
+        "component_record_depth_after_reparent",
+        Internals_component_record_depth_after_reparent
+    },
+    {
+        "component_record_depth_after_reparent_different_depth",
+        Internals_component_record_depth_after_reparent_different_depth
+    },
+    {
+        "component_record_depth_nested_after_reparent",
+        Internals_component_record_depth_nested_after_reparent
+    },
+    {
+        "component_record_depth_nested_after_reparent_different_depth",
+        Internals_component_record_depth_nested_after_reparent_different_depth
+    },
+    {
+        "component_record_depth_after_parent_remove",
+        Internals_component_record_depth_after_parent_remove
+    },
+    {
+        "component_record_depth_nested_after_parent_remove",
+        Internals_component_record_depth_nested_after_parent_remove
+    },
+    {
+        "component_record_depth_after_parent_add",
+        Internals_component_record_depth_after_parent_add
+    },
+    {
+        "component_record_depth_nested_after_parent_add",
+        Internals_component_record_depth_nested_after_parent_add
+    },
+    {
+        "non_fragmenting_component_record_depth_parent",
+        Internals_non_fragmenting_component_record_depth_parent
+    },
+    {
+        "non_fragmenting_component_record_depth_nested_parent",
+        Internals_non_fragmenting_component_record_depth_nested_parent
+    },
+    {
+        "non_fragmenting_component_record_depth_after_reparent",
+        Internals_non_fragmenting_component_record_depth_after_reparent
+    },
+    {
+        "non_fragmenting_component_record_depth_after_reparent_different_depth",
+        Internals_non_fragmenting_component_record_depth_after_reparent_different_depth
+    },
+    {
+        "non_fragmenting_component_record_depth_nested_after_reparent",
+        Internals_non_fragmenting_component_record_depth_nested_after_reparent
+    },
+    {
+        "non_fragmenting_component_record_depth_nested_after_reparent_different_depth",
+        Internals_non_fragmenting_component_record_depth_nested_after_reparent_different_depth
+    },
+    {
+        "non_fragmenting_component_record_depth_after_parent_remove",
+        Internals_non_fragmenting_component_record_depth_after_parent_remove
+    },
+    {
+        "non_fragmenting_component_record_depth_nested_after_parent_remove",
+        Internals_non_fragmenting_component_record_depth_nested_after_parent_remove
+    },
+    {
+        "non_fragmenting_component_record_depth_after_parent_add",
+        Internals_non_fragmenting_component_record_depth_after_parent_add
+    },
+    {
+        "non_fragmenting_component_record_depth_nested_after_parent_add",
+        Internals_non_fragmenting_component_record_depth_nested_after_parent_add
+    },
+    {
+        "component_record_for_value_pair",
+        Internals_component_record_for_value_pair
+    },
+    {
         "create_65k_tables",
         Internals_create_65k_tables
     }
@@ -13740,6 +15841,10 @@ bake_test_case Error_testcases[] = {
     {
         "set_log_level_return",
         Error_set_log_level_return
+    },
+    {
+        "print_backtrace",
+        Error_print_backtrace
     }
 };
 
@@ -13764,14 +15869,14 @@ static bake_test_suite suites[] = {
         "Id",
         NULL,
         NULL,
-        47,
+        78,
         Id_testcases
     },
     {
         "Entity",
         NULL,
         NULL,
-        149,
+        152,
         Entity_testcases
     },
     {
@@ -13799,7 +15904,7 @@ static bake_test_suite suites[] = {
         "Event",
         NULL,
         NULL,
-        36,
+        39,
         Event_testcases
     },
     {
@@ -13841,30 +15946,37 @@ static bake_test_suite suites[] = {
         "Sparse",
         Sparse_setup,
         NULL,
-        210,
+        224,
         Sparse_testcases,
         1,
         Sparse_params
     },
     {
+        "NonFragmentingChildOf",
+        NULL,
+        NULL,
+        239,
+        NonFragmentingChildOf_testcases
+    },
+    {
         "Hierarchies",
         Hierarchies_setup,
         NULL,
-        108,
+        109,
         Hierarchies_testcases
     },
     {
         "OrderedChildren",
         NULL,
         NULL,
-        40,
+        48,
         OrderedChildren_testcases
     },
     {
         "Has",
         NULL,
         NULL,
-        18,
+        22,
         Has_testcases
     },
     {
@@ -13885,7 +15997,7 @@ static bake_test_suite suites[] = {
         "Reference",
         Reference_setup,
         NULL,
-        25,
+        26,
         Reference_testcases
     },
     {
@@ -13920,7 +16032,7 @@ static bake_test_suite suites[] = {
         "Lookup",
         Lookup_setup,
         NULL,
-        63,
+        64,
         Lookup_testcases
     },
     {
@@ -13934,21 +16046,21 @@ static bake_test_suite suites[] = {
         "Clone",
         NULL,
         NULL,
-        16,
+        20,
         Clone_testcases
     },
     {
         "ComponentLifecycle",
         ComponentLifecycle_setup,
         NULL,
-        132,
+        138,
         ComponentLifecycle_testcases
     },
     {
         "Pairs",
         NULL,
         NULL,
-        126,
+        136,
         Pairs_testcases
     },
     {
@@ -13962,7 +16074,7 @@ static bake_test_suite suites[] = {
         "Observer",
         NULL,
         NULL,
-        293,
+        332,
         Observer_testcases
     },
     {
@@ -14004,14 +16116,14 @@ static bake_test_suite suites[] = {
         "Prefab",
         Prefab_setup,
         NULL,
-        176,
+        197,
         Prefab_testcases
     },
     {
         "World",
         World_setup,
         NULL,
-        150,
+        154,
         World_testcases
     },
     {
@@ -14039,7 +16151,7 @@ static bake_test_suite suites[] = {
         "Commands",
         NULL,
         NULL,
-        168,
+        175,
         Commands_testcases
     },
     {
@@ -14060,7 +16172,7 @@ static bake_test_suite suites[] = {
         "Table",
         NULL,
         NULL,
-        31,
+        32,
         Table_testcases
     },
     {
@@ -14074,14 +16186,14 @@ static bake_test_suite suites[] = {
         "Internals",
         Internals_setup,
         NULL,
-        22,
+        44,
         Internals_testcases
     },
     {
         "Error",
         Error_setup,
         NULL,
-        12,
+        13,
         Error_testcases
     },
     {
@@ -14094,5 +16206,5 @@ static bake_test_suite suites[] = {
 };
 
 int main(int argc, char *argv[]) {
-    return bake_test_run("core", argc, argv, suites, 47);
+    return bake_test_run("core", argc, argv, suites, 48);
 }

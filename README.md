@@ -11,14 +11,14 @@ Flecs is a fast and lightweight Entity Component System that lets you build game
 - Fast and [portable](#language-bindings) zero dependency [C99 API](https://www.flecs.dev/flecs/group__c.html)
 - Modern type-safe [C++17 API](https://www.flecs.dev/flecs/group__cpp.html) that doesn't use STL containers
 - First open source ECS with full support for [Entity Relationships](https://www.flecs.dev/flecs/md_docs_2Relationships.html)!
-- Fast native support for [hierarchies](https://www.flecs.dev/flecs/md_docs_2Relationships.html#the-childof-relationship) and [prefabs](https://www.flecs.dev/flecs/md_docs_2Relationships.html#the-isa-relationship)
+- Fast native support for [hierarchies](https://www.flecs.dev/flecs/md_docs_2HierarchiesManual.html) and [prefabs](https://www.flecs.dev/flecs/md_docs_2PrefabsManual.html)
 - Code base that builds in less than 5 seconds
 - Runs [in the browser](https://flecs.dev/city) without modifications with emscripten
 - Cache friendly [archetype/SoA storage](https://ajmmertens.medium.com/building-an-ecs-2-archetypes-and-vectorization-fe21690805f9) that can process millions of entities every frame
 - Automatic component registration that works out of the box across shared libraries/DLLs
 - Write free functions with [queries](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/queries/basics) or run code automatically in [systems](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/systems/pipeline)
 - Run games on multiple CPU cores with a fast lockless scheduler
-- Verified on all major compilers and platforms with [CI](https://github.com/SanderMertens/flecs/actions) running more than 10000 tests
+- Verified on all major compilers and platforms with [CI](https://github.com/SanderMertens/flecs/actions) running more than 13000 tests
 - Integrated [reflection framework](https://www.flecs.dev/flecs/group__c__addons__meta.html) with [JSON serializer](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/reflection/basics_json) and support for [runtime components](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/reflection/runtime_component)
 - [Unit annotations](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/reflection/units) for components
 - Powerful [query language](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/queries) with support for [joins](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/queries/setting_variables) and [inheritance](https://github.com/SanderMertens/flecs/tree/master/examples/cpp/queries/component_inheritance)
@@ -107,7 +107,7 @@ If you have a project you'd like to share, let me know on [Discord](https://disc
 [![Tempest Rising](docs/img/projects/tempest_rising.png)](https://store.steampowered.com/app/1486920/Tempest_Rising/)
 
 ### Territory Control 2
-[![image](docs/img/projects/territory_control.jpg)](https://store.steampowered.com/app/690290/Territory_Control_2/)
+[![image](docs/img/projects/territory_control.png)](https://store.steampowered.com/app/690290/Territory_Control_2/)
 
 ### Resistance is Brutal
 [![image](docs/img/projects/resistance_is_brutal.jpg)](https://store.steampowered.com/app/3378140/Resistance_Is_Brutal/)
@@ -124,6 +124,12 @@ If you have a project you'd like to share, let me know on [Discord](https://disc
 ### Gloam Vault
 [![image](docs/img/projects/gloam_vault.png)](https://store.steampowered.com/app/3460840/Gloamvault/)
 
+### Antimatcher
+[![image](docs/img/projects/antimatcher.png)](https://store.steampowered.com/app/4336520/AntiMatcher/)
+
+### Writ of Battle
+[![image](docs/img/projects/writ_of_battle.jpg)](https://store.steampowered.com/app/4445990/Writ_of_Battle/)
+
 ### Extermination Shock
 [![image](docs/img/projects/extermination_shock.png)](https://store.steampowered.com/app/2510820/Extermination_Shock/)
 
@@ -133,27 +139,14 @@ If you have a project you'd like to share, let me know on [Discord](https://disc
 ### ECS survivors
 [![image](docs/img/projects/ecs_survivors.png)](https://laurent-voisard.itch.io/ecs-survivors/)
 
-### Ascendant
-[![image](docs/img/projects/ascendant.jpg)](https://vkguide.dev/docs/ascendant/)
-
 ### Tome Tumble Tournament
 [![image](docs/img/projects/tome_tumble.png)](https://terzalo.itch.io/tome-tumble-tournament)
 
 ### Sol Survivor
 [![image](docs/img/projects/sol_survivor.png)](https://nicok.itch.io/sol-survivor-demo)
 
-### Equilibrium Engine
-[![image](docs/img/projects/equilibrium_engine.png)](https://github.com/clibequilibrium/EquilibriumEngine)
-
 ### After Sun
 [![image](docs/img/projects/after_sun.png)](https://github.com/foxnne/aftersun)
-
-### Flecs Demo's
-https://github.com/SanderMertens/tower_defense
-[![Tower Defense](docs/img/projects/tower_defense.png)](https://www.flecs.dev/tower_defense/etc)
-
-https://github.com/flecs-hub/city
-[![City](docs/img/projects/city.png)](https://www.flecs.dev/city)
 
 ## Flecs Hub
 [Flecs Hub](https://github.com/flecs-hub) is a collection of repositories that show how Flecs can be used to build game systems like input handling, hierarchical transforms and rendering.

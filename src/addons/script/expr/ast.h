@@ -1,5 +1,5 @@
 /**
- * @file addons/script/expr_ast.h
+ * @file addons/script/expr/ast.h
  * @brief Script expression AST.
  */
 
@@ -90,6 +90,10 @@ typedef struct ecs_expr_binary_t {
     ecs_expr_node_t *left;
     ecs_expr_node_t *right;
     ecs_token_kind_t operator;
+
+    /* For vector operations */
+    ecs_entity_t vector_type;
+    int32_t vector_count;
 } ecs_expr_binary_t;
 
 typedef struct ecs_expr_member_t {
@@ -148,6 +152,11 @@ ecs_expr_value_node_t* flecs_expr_value_from(
     ecs_entity_t type);
 
 ecs_expr_variable_t* flecs_expr_variable_from(
+    ecs_script_t *script,
+    ecs_expr_node_t *node,
+    const char *name);
+
+ecs_expr_member_t* flecs_expr_member_from(
     ecs_script_t *script,
     ecs_expr_node_t *node,
     const char *name);

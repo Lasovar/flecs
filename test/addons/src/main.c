@@ -181,7 +181,9 @@ void SystemMisc_register_callback_after_run(void);
 void SystemMisc_register_run_after_callback(void);
 void SystemMisc_register_callback_after_run_ctx(void);
 void SystemMisc_register_run_after_callback_ctx(void);
+void SystemMisc_set_group(void);
 void SystemMisc_run_w_query_next(void);
+void SystemMisc_missing_callback(void);
 
 // Testsuite 'SystemPeriodic'
 void SystemPeriodic_1_type_1_component(void);
@@ -465,6 +467,10 @@ void Rest_query(void);
 void Rest_named_query(void);
 void Rest_tables(void);
 void Rest_components(void);
+void Rest_type_info_non_existing_entity(void);
+void Rest_type_info_not_component(void);
+void Rest_type_info_component_without_reflection(void);
+void Rest_type_info_component_with_reflection(void);
 void Rest_request_commands(void);
 void Rest_request_commands_2_syncs(void);
 void Rest_request_commands_no_frames(void);
@@ -478,6 +484,11 @@ void Rest_get_pipeline_stats_after_delete_system(void);
 void Rest_request_world_summary_before_monitor_sys_run(void);
 void Rest_escape_backslash(void);
 void Rest_request_small_buffer_plus_one(void);
+void Rest_request_ending_in_pct(void);
+void Rest_request_ending_in_2_pct(void);
+void Rest_request_ending_in_pct_single_digit(void);
+void Rest_request_ending_in_pct_invalid_code(void);
+void Rest_world_has_build_info(void);
 
 // Testsuite 'Metrics'
 void Metrics_member_gauge_1_entity(void);
@@ -1236,8 +1247,16 @@ bake_test_case SystemMisc_testcases[] = {
         SystemMisc_register_run_after_callback_ctx
     },
     {
+        "set_group",
+        SystemMisc_set_group
+    },
+    {
         "run_w_query_next",
         SystemMisc_run_w_query_next
+    },
+    {
+        "missing_callback",
+        SystemMisc_missing_callback
     }
 };
 
@@ -2258,6 +2277,22 @@ bake_test_case Rest_testcases[] = {
         Rest_components
     },
     {
+        "type_info_non_existing_entity",
+        Rest_type_info_non_existing_entity
+    },
+    {
+        "type_info_not_component",
+        Rest_type_info_not_component
+    },
+    {
+        "type_info_component_without_reflection",
+        Rest_type_info_component_without_reflection
+    },
+    {
+        "type_info_component_with_reflection",
+        Rest_type_info_component_with_reflection
+    },
+    {
         "request_commands",
         Rest_request_commands
     },
@@ -2308,6 +2343,26 @@ bake_test_case Rest_testcases[] = {
     {
         "request_small_buffer_plus_one",
         Rest_request_small_buffer_plus_one
+    },
+    {
+        "request_ending_in_pct",
+        Rest_request_ending_in_pct
+    },
+    {
+        "request_ending_in_2_pct",
+        Rest_request_ending_in_2_pct
+    },
+    {
+        "request_ending_in_pct_single_digit",
+        Rest_request_ending_in_pct_single_digit
+    },
+    {
+        "request_ending_in_pct_invalid_code",
+        Rest_request_ending_in_pct_invalid_code
+    },
+    {
+        "world_has_build_info",
+        Rest_world_has_build_info
     }
 };
 
@@ -2613,6 +2668,7 @@ const char* MultiThread_worker_kind_param[] = {"thread", "task"};
 bake_test_param MultiThread_params[] = {
     {"worker_kind", (char**)MultiThread_worker_kind_param, 2}
 };
+
 const char* MultiThreadStaging_worker_kind_param[] = {"thread", "task"};
 bake_test_param MultiThreadStaging_params[] = {
     {"worker_kind", (char**)MultiThreadStaging_worker_kind_param, 2}
@@ -2637,7 +2693,7 @@ static bake_test_suite suites[] = {
         "SystemMisc",
         NULL,
         NULL,
-        70,
+        72,
         SystemMisc_testcases
     },
     {
@@ -2767,7 +2823,7 @@ static bake_test_suite suites[] = {
         "Rest",
         NULL,
         NULL,
-        22,
+        31,
         Rest_testcases
     },
     {

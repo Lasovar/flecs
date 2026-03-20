@@ -1,6 +1,6 @@
 /**
- * @file addons/script/exor_visit.h
- * @brief Script AST visitor utilities.
+ * @file addons/script/expr/visit.h
+ * @brief Script expression AST visitor utilities.
  */
 
 #ifndef FLECS_EXPR_SCRIPT_VISIT_H

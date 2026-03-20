@@ -53,7 +53,7 @@ ecs_entity_t flecs_run_system(
              * EcsTimer component, don't run the system. This can be the result
              * of a single-shot timer that has fired already. Not resetting the
              * timer field of the system will ensure that the system won't be
-             * ran after the timer has fired. */
+             * run after the timer has fired. */
             return 0;
         }
     }
@@ -92,6 +92,10 @@ ecs_entity_t flecs_run_system(
     qit.ctx = system_data->ctx;
     qit.callback_ctx = system_data->callback_ctx;
     qit.run_ctx = system_data->run_ctx;
+
+    if (system_data->group_id_set) {
+        ecs_iter_set_group(&qit, system_data->group_id);
+    }
 
     if (stage_count > 1 && system_data->multi_threaded) {
         wit = ecs_worker_iter(it, stage_index, stage_count);
@@ -272,6 +276,13 @@ ecs_entity_t ecs_system_init(
 
     EcsPoly *poly = flecs_poly_bind(world, entity, ecs_system_t);
     if (!poly->poly) {
+        ecs_check(desc->callback != NULL || desc->run != NULL, 
+            ECS_INVALID_PARAMETER,
+            "missing implementation for system %s (set .callback or .run)",
+                desc->entity 
+                    ? flecs_errstr(ecs_get_path(world, desc->entity)) 
+                    : "<unknown>");
+
         ecs_system_t *system = flecs_poly_new(ecs_system_t);
         ecs_assert(system != NULL, ECS_INTERNAL_ERROR, NULL);
         
@@ -289,6 +300,11 @@ ecs_entity_t ecs_system_init(
 
         /* Prevent the system from moving while we're initializing */
         flecs_defer_begin(world, world->stages[0]);
+
+        if (desc->phase) {
+            ecs_add_id(world, entity, desc->phase);
+            ecs_add_pair(world, entity, EcsDependsOn, desc->phase);
+        }
 
         system->query = query;
 
@@ -413,15 +429,27 @@ const ecs_system_t* ecs_system_get(
     return flecs_poly_get(world, entity, ecs_system_t);
 }
 
+void ecs_system_set_group(
+    ecs_world_t *world,
+    ecs_entity_t system,
+    uint64_t group_id)
+{
+    ecs_check(world != NULL, ECS_INVALID_PARAMETER, NULL);
+    ecs_check(system != 0, ECS_INVALID_PARAMETER, NULL);
+
+    ecs_system_t *system_data = flecs_poly_get(world, system, ecs_system_t);
+    ecs_check(system_data != NULL, ECS_INVALID_PARAMETER, NULL);
+
+    system_data->group_id = group_id;
+    system_data->group_id_set = true;
+error:
+    return;
+}
+
 void FlecsSystemImport(
     ecs_world_t *world)
 {
     ECS_MODULE(world, FlecsSystem);
-#ifdef FLECS_DOC
-    ECS_IMPORT(world, FlecsDoc);
-    ecs_doc_set_brief(world, ecs_id(FlecsSystem), 
-        "Module that implements Flecs systems");
-#endif
 
     ecs_set_name_prefix(world, "Ecs");
 

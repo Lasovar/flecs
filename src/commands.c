@@ -225,7 +225,7 @@ bool flecs_defer_bulk_new(
     if (flecs_defer_cmd(stage)) {
         ecs_entity_t *ids = ecs_os_malloc(count * ECS_SIZEOF(ecs_entity_t));
 
-        /* Use ecs_new_id as this is thread safe */
+        /* Use ecs_new as this is thread safe */
         int i;
         for (i = 0; i < count; i ++) {
             ids[i] = ecs_new(world);
@@ -233,7 +233,7 @@ bool flecs_defer_bulk_new(
 
         *ids_out = ids;
 
-        /* Store data in op */
+        /* Store data in cmd */
         ecs_cmd_t *cmd = flecs_cmd_new(stage);
         cmd->kind = EcsCmdBulkNew;
         cmd->id = id;
@@ -272,6 +272,40 @@ bool flecs_defer_remove(
         cmd->kind = EcsCmdRemove;
         cmd->id = id;
         cmd->entity = entity;
+
+        /* If an override is removed, restore the component to the value of
+         * the overridden component. This serves two purposes:
+         *
+         * - the application immediately sees the correct component value
+         * - if a remove command is followed up by an add command, the override
+         *   will still be applied vs. getting cancelled out because of
+         *   command batching.
+         */
+        ecs_world_t *world = stage->world;
+        ecs_record_t *r = flecs_entities_get(world, entity);
+        ecs_table_t *table = r->table;
+        ecs_table_overrides_t *o = table->data.overrides;
+        if (o) {
+            ecs_component_record_t *cr = flecs_components_get(world, id);
+            const ecs_type_info_t *ti;
+            if (cr && (ti = cr->type_info)) {
+                const ecs_table_record_t *tr = flecs_component_get_table(
+                    cr, table);
+                if (tr) {
+                    ecs_assert(tr->column != -1, ECS_INTERNAL_ERROR, NULL);
+                    ecs_ref_t *ref = &o->refs[tr->column];
+                    if (ref->entity) {
+                        void *dst = ECS_OFFSET(
+                            table->data.columns[tr->column].data, 
+                            ti->size * ECS_RECORD_TO_ROW(r->row));
+                        const void *src = ecs_ref_get_id(
+                            world, &o->refs[tr->column], id);
+                        flecs_type_info_copy(dst, src, 1, ti);
+                    }
+                }
+            }
+        }
+
         return true;
     }
     return false;
@@ -297,7 +331,7 @@ flecs_component_ptr_t flecs_defer_get_existing(
             if (world->flags & EcsWorldMultiThreaded) {
                 ptr.ti = ecs_get_type_info(world, id);
             } else {
-                /* When not in multi threaded mode, it's safe to find or 
+                /* When not in multithreaded mode, it's safe to find or
                 * create the component record. */
                 cr = flecs_components_ensure(world, id);
                 ecs_assert(cr != NULL, ECS_INTERNAL_ERROR, NULL);
@@ -397,18 +431,10 @@ void* flecs_defer_ensure(
 
         if (!base) {
             /* Normal ctor */
-            ecs_xtor_t ctor = ti->hooks.ctor;
-            if (ctor) {
-                ctor(ptr.ptr, 1, ti);
-            }
+            flecs_type_info_ctor(ptr.ptr, 1, ti);
         } else {
             /* Override */
-            ecs_copy_t copy = ti->hooks.copy_ctor;
-            if (copy) {
-                copy(ptr.ptr, base, 1, ti);
-            } else {
-                ecs_os_memcpy(ptr.ptr, base, size);
-            }
+            flecs_type_info_copy_ctor(ptr.ptr, base, 1, ti);
         }
     } else {
         cmd->kind = EcsCmdAdd;
@@ -439,11 +465,19 @@ void* flecs_defer_set(
     flecs_component_ptr_t ptr = flecs_defer_get_existing(
         world, entity, r, id, size);
 
+    if (world->stage_count != 1) {
+        /* If world has multiple stages we need to insert a set command
+         * with temporary storage, as the value could be lost otherwise
+         * by a command in another stage. */
+        ptr.ptr = NULL;
+    }
+
     const ecs_type_info_t *ti = ptr.ti;
     ecs_check(ti != NULL, ECS_INVALID_PARAMETER, 
         "provided component is not a type");
     ecs_assert(size == ti->size, ECS_INVALID_PARAMETER,
-        "mismatching size specified for component in ensure/emplace/set");
+        "mismatching size specified for component in ensure/emplace/set (%u vs %u)",
+            size, ti->size);
 
     /* Handle trivial set command (no hooks, OnSet observers) */
     if (id < FLECS_HI_COMPONENT_ID) {
@@ -458,8 +492,8 @@ void* flecs_defer_set(
                 cmd->is._1.value = ptr.ptr;
             } else {
                 /* No OnSet observers, so only thing we need to do is make sure
-                 * that a preceding remove command doesn't cause the entity to
-                 * end up without the component. */
+                * that a preceding remove command doesn't cause the entity to
+                * end up without the component. */
                 cmd->kind = EcsCmdAdd;
             }
 
@@ -468,13 +502,14 @@ void* flecs_defer_set(
         }
     }
 
-    ecs_copy_t copy;
     if (!ptr.ptr) {
-        cmd->kind = EcsCmdSet;
+        bool is_dont_fragment = 
+            flecs_component_get_flags(world, id) & EcsIdDontFragment;
+        cmd->kind = is_dont_fragment ? EcsCmdSetDontFragment : EcsCmdSet;
         cmd->is._1.size = size;
         ptr.ptr = cmd->is._1.value =
             flecs_stack_alloc(&stage->cmd->stack, size, ti->alignment);
-        copy = ti->hooks.copy_ctor;
+        flecs_type_info_copy_ctor(ptr.ptr, value, 1, ti);
     } else {
         cmd->kind = EcsCmdAddModified;
 
@@ -484,13 +519,7 @@ void* flecs_defer_set(
                 world, r->table, entity, id, ptr.ptr, value, ti);
         }
 
-        copy = ti->hooks.copy;
-    }
-
-    if (copy) {
-        copy(ptr.ptr, value, 1, ti);
-    } else {
-        ecs_os_memcpy(ptr.ptr, value, size);
+        flecs_type_info_copy(ptr.ptr, value, 1, ti);
     }
 
     return ptr.ptr;
@@ -549,15 +578,14 @@ void* flecs_defer_cpp_set(
     }
     
     if (!ptr.ptr) {
-        cmd->kind = EcsCmdSet;
+        bool is_dont_fragment = 
+            flecs_component_get_flags(world, id) & EcsIdDontFragment;
+        cmd->kind = is_dont_fragment ? EcsCmdSetDontFragment : EcsCmdSet;
         cmd->is._1.size = size;
         ptr.ptr = cmd->is._1.value =
             flecs_stack_alloc(&stage->cmd->stack, size, ti->alignment);
 
-        ecs_xtor_t ctor = ti->hooks.ctor;
-        if (ctor) {
-            ctor(ptr.ptr, 1, ti);
-        }
+        flecs_type_info_ctor(ptr.ptr, 1, ti);
     } else {
         cmd->kind = EcsCmdAddModified;
 
@@ -647,17 +675,9 @@ void flecs_enqueue(
         void *param_cmd = flecs_stack_alloc(stack, ti->size, ti->alignment);
         ecs_assert(param_cmd != NULL, ECS_INTERNAL_ERROR, NULL);
         if (desc->param) {
-            if (ti->hooks.move_ctor) {
-                ti->hooks.move_ctor(param_cmd, desc->param, 1, ti);
-            } else {
-                ecs_os_memcpy(param_cmd, desc->param, ti->size);
-            }
+            flecs_type_info_move_ctor(param_cmd, desc->param, 1, ti);
         } else {
-            if (ti->hooks.copy_ctor) {
-                ti->hooks.copy_ctor(param_cmd, desc->const_param, 1, ti);
-            } else {
-                ecs_os_memcpy(param_cmd, desc->const_param, ti->size);
-            }
+            flecs_type_info_copy_ctor(param_cmd, desc->const_param, 1, ti);
         }
 
         desc_cmd->param = param_cmd;
@@ -694,10 +714,7 @@ void flecs_dtor_value(
 {
     const ecs_type_info_t *ti = ecs_get_type_info(world, id);
     ecs_assert(ti != NULL, ECS_INTERNAL_ERROR, NULL);
-    ecs_xtor_t dtor = ti->hooks.dtor;
-    if (dtor) {
-        dtor(value, 1, ti);
-    }
+    flecs_type_info_dtor(value, 1, ti);
 }
 
 static
@@ -755,7 +772,7 @@ bool flecs_remove_invalid(
         } else {
             ecs_entity_t tgt = ECS_PAIR_SECOND(id);
             if (!flecs_entities_is_valid(world, tgt)) {
-                /* Check the relationship's policy for deleted objects */
+                /* Check the relationship's policy for deleted targets */
                 ecs_component_record_t *cr = flecs_components_get(world, 
                     ecs_pair(rel, EcsWildcard));
                 if (cr) {
@@ -765,7 +782,7 @@ bool flecs_remove_invalid(
                          * other ids */
                         return false;
                     } else if (action == EcsPanic) {
-                        /* If policy is throw this object should not have
+                        /* If policy is Panic, this object should not have
                          * been deleted */
                         flecs_throw_invalid_delete(world, id);
                     } else {
@@ -781,7 +798,7 @@ bool flecs_remove_invalid(
     } else {
         id &= ECS_COMPONENT_MASK;
         if (!flecs_entities_is_valid(world, id)) {
-            /* After relationship is deleted we can no longer see what its
+            /* After component is deleted we can no longer see what its
              * delete action was, so pretend this never happened */
             *id_out = 0;
             return true;
@@ -835,6 +852,9 @@ void flecs_cmd_batch_for_entity(
                     
             if (cr && cr->flags & EcsIdDontFragment) {
                 /* Nothing to batch for non-fragmenting components */
+                if (cmd->kind == EcsCmdSet) {
+                    cmd->kind = EcsCmdSetDontFragment;
+                }
                 continue;
             }
 
@@ -879,22 +899,7 @@ void flecs_cmd_batch_for_entity(
              * the constructor is not invoked for the component */
             break;
         case EcsCmdRemove: {
-            ecs_table_t *next =
-                flecs_find_table_remove(world, table, id, diff);
-            if ((table != next) && (table->flags & EcsTableHasIsA)) {
-                /* Abort batch. It's possible that we removed an override, and
-                 * if we're reading the component in the same batch we need to
-                 * reapply the override. If we do nothing here, an add for the
-                 * same component would cancel out the remove and we'd won't get
-                 * the override for the component. */
-                next_for_entity = 0;
-                
-                /* Make sure that if we have to do any processing we don't go 
-                 * beyond the current command. */
-                cmd->next_for_entity = 0;
-            }
-
-            table = next;
+            table = flecs_find_table_remove(world, table, id, diff);
             world->info.cmd.batched_command_count ++;
             cmd->kind = EcsCmdSkip;
             break;
@@ -923,6 +928,7 @@ void flecs_cmd_batch_for_entity(
         case EcsCmdSkip:
         case EcsCmdModifiedNoHook:
         case EcsCmdModified:
+        case EcsCmdSetDontFragment:
             break;
         }
     } while ((cur = next_for_entity));
@@ -945,8 +951,11 @@ void flecs_cmd_batch_for_entity(
     /* If destination table has new sparse components, make sure they're created
      * for the entity. */
     if ((table_diff.added_flags & (EcsTableHasSparse|EcsTableHasDontFragment)) && added.count) {
-        flecs_sparse_on_add(
-            world, table, ECS_RECORD_TO_ROW(r->row), 1, &added, true);
+        if (flecs_sparse_on_add(
+            world, table, ECS_RECORD_TO_ROW(r->row), 1, &added, true))
+        {
+            table_diff.added_flags |= EcsTableHasOnAdd;
+        }
     }
 
     /* If the batch contains set commands, copy the component value from the 
@@ -979,19 +988,23 @@ void flecs_cmd_batch_for_entity(
                     void *ptr = cmd->is._1.value;
                     const ecs_type_info_t *ti = dst.ti;
                     if (ti->hooks.on_replace) {
-                        flecs_invoke_replace_hook(world, r->table, entity, 
+                        ecs_table_t *prev_table = r->table;
+                        flecs_invoke_replace_hook(world, prev_table, entity, 
                             cmd->id, dst.ptr, ptr, ti);
+                        if (prev_table != r->table) {
+                            if (!r->table) {
+                                /* Entity was deleted */
+                                goto done;
+                            }
+                            dst = flecs_get_mut(
+                                world, entity, cmd->id, r, cmd->is._1.size);
+                        }
                     }
 
-                    ecs_move_t move = ti->hooks.move;
-                    if (move) {
-                        move(dst.ptr, ptr, 1, ti);
-                        ecs_xtor_t dtor = ti->hooks.dtor;
-                        if (dtor) {
-                            dtor(ptr, 1, ti);
-                        }
-                    } else {
-                        ecs_os_memcpy(dst.ptr, ptr, ti->size);
+                    bool move_hook = ti->hooks.move != NULL;
+                    flecs_type_info_move(dst.ptr, ptr, 1, ti);
+                    if (move_hook) {
+                        flecs_type_info_dtor(ptr, 1, ti);
                     }
 
                     flecs_stack_free(ptr, cmd->is._1.size);
@@ -1023,6 +1036,7 @@ void flecs_cmd_batch_for_entity(
             case EcsCmdModified:
             case EcsCmdModifiedNoHook:
             case EcsCmdAddModified:
+            case EcsCmdSetDontFragment:
             case EcsCmdPath:
             case EcsCmdDelete:
             case EcsCmdClear:
@@ -1041,31 +1055,32 @@ void flecs_cmd_batch_for_entity(
     if (added.count) {
         ecs_table_diff_t add_diff = ECS_TABLE_DIFF_INIT;
         add_diff.added = added;
-        add_diff.added_flags = diff->added_flags;
+        add_diff.added_flags = table_diff.added_flags;
 
         if (r->row & EcsEntityIsTraversable) {
             /* Update monitors since we didn't do this in flecs_commit. Do this
-             * before calling flecs_notify_on_add() since this can trigger 
+             * before calling flecs_actions_move_add() since this can trigger
              * prefab instantiation logic. When that happens, prefab children
              * can be created for this instance which would mean that the table
-             * count of r->cr would always be >0.
-             * Since those tables are new, we don't have to invoke component 
+             * count of cr would always be >0.
+             * Since those tables are new, we don't have to invoke component
              * monitors since queries will have correctly matched them. */
-            ecs_assert(r->cr != NULL, ECS_INTERNAL_ERROR, NULL);
-            if (ecs_map_count(&r->cr->cache.index)) {
+            ecs_component_record_t *cr = flecs_components_get(
+                world, ecs_pair(EcsWildcard, entity));
+            if (cr && ecs_map_count(&cr->cache.index)) {
                 flecs_update_component_monitors(world, &added, NULL);
             }
         }
 
         flecs_defer_begin(world, world->stages[0]);
-        flecs_notify_on_add(world, r->table, start_table,
+        flecs_actions_move_add(world, r->table, start_table,
             ECS_RECORD_TO_ROW(r->row), 1, &add_diff, 0, true, false);
         flecs_defer_end(world, world->stages[0]);
     }
 
+done:
     diff->added.array = added.array;
     diff->added.count = added.count;
-
     flecs_table_diff_builder_clear(diff);
 }
 
@@ -1123,8 +1138,8 @@ bool flecs_defer_end(
             ecs_cmd_t *cmds = ecs_vec_first(queue);
             int32_t i, count = ecs_vec_count(queue);
 
-            ecs_table_diff_builder_t diff;
-            flecs_table_diff_builder_init(world, &diff);
+            ecs_table_diff_builder_t diff = {0};
+            bool diff_builder_used = false;
 
             for (i = 0; i < count; i ++) {
                 ecs_cmd_t *cmd = &cmds[i];
@@ -1138,6 +1153,11 @@ bool flecs_defer_end(
 
                     /* Batch commands for entity to limit archetype moves */
                     if (is_alive) {
+                        if (!diff_builder_used) {
+                            flecs_table_diff_builder_init(world, &diff);
+                            diff_builder_used = true;
+                        }
+
                         flecs_cmd_batch_for_entity(world, &diff, e, cmds, i);
                     } else {
                         world->info.cmd.discard_count ++;
@@ -1185,6 +1205,7 @@ bool flecs_defer_end(
                     world->info.cmd.other_count ++;
                     break;
                 case EcsCmdSet:
+                case EcsCmdSetDontFragment:
                     flecs_set_id_move(world, dst_stage, e, 
                         cmd->id, flecs_itosize(cmd->is._1.size), 
                         cmd->is._1.value, kind);
@@ -1234,7 +1255,7 @@ bool flecs_defer_end(
                     break;
                 case EcsCmdOnDeleteAction:
                     ecs_defer_begin(world);
-                    flecs_on_delete(world, id, e, false);
+                    flecs_on_delete(world, id, e, false, false);
                     ecs_defer_end(world);
                     world->info.cmd.other_count ++;
                     break;
@@ -1290,7 +1311,10 @@ bool flecs_defer_end(
 
             flecs_stack_reset(&commands->stack);
             ecs_vec_clear(queue);
-            flecs_table_diff_builder_fini(world, &diff);
+
+            if (diff_builder_used) {
+                flecs_table_diff_builder_fini(world, &diff);
+            }
 
             /* Internal callback for capturing commands, signal queue is done */
             if (world->on_commands_active) {
@@ -1307,7 +1331,7 @@ bool flecs_defer_end(
     return false;
 }
 
-/* Delete operations from queue without executing them. */
+/* Discard commands from queue without executing them. */
 bool flecs_defer_purge(
     ecs_world_t *world,
     ecs_stage_t *stage)

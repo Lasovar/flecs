@@ -24,8 +24,8 @@ void flecs_set_opaque_type(ecs_iter_t *it) {
         }
 
         /* If the as_type is anonymous and has no parent, parent it under the
-        * opaque type. That way we don't end up with a bunch of anonymous entities
-        * in the root scope. */
+         * opaque type. That way we don't end up with a bunch of anonymous entities
+         * in the root scope. */
         if (!ecs_get_parent(world, as_type) && !ecs_get_name(world, as_type)) {
             ecs_add_pair(world, as_type, EcsChildOf, e);
         }
@@ -79,10 +79,10 @@ void flecs_meta_opaque_init(
     });
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = { .id = ecs_id(EcsOpaque) },
         .events = {EcsOnSet},
-        .callback = flecs_set_opaque_type
+        .callback = flecs_set_opaque_type,
+        .global_observer = true
     });
 
 }

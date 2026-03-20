@@ -181,6 +181,9 @@
                 "value_range",
                 "error_range",
                 "warning_range",
+                "value_range_no_member_entities",
+                "error_range_no_member_entities",
+                "warning_range_no_member_entities",
                 "error_and_warning_range",
                 "error_range_invalid_type",
                 "warning_range_invalid_type",
@@ -191,7 +194,11 @@
                 "overlapping_value_error_range",
                 "overlapping_value_warning_range",
                 "struct_w_16_alignment",
-                "struct_w_use_offset"
+                "struct_w_use_offset",
+                "direct_cycle",
+                "indirect_cycle",
+                "use_before_registering_reflection",
+                "use_before_registering_reflection_w_hooks"
             ]
         }, {
             "id": "NestedStructTypes",
@@ -243,7 +250,9 @@
                 "array_of_standaline_array_bool_1",
                 "array_of_standaline_array_bool_2",
                 "array_of_standaline_array_bool_3",
-                "array_w_short_notation"
+                "array_w_short_notation",
+                "direct_cycle",
+                "indirect_cycle"
             ]
         }, {
             "id": "VectorTypes",
@@ -532,13 +541,16 @@
                 "struct_u64",
                 "struct_uptr",
                 "struct_float",
+                "struct_float_scientific_notation",
                 "struct_double",
+                "struct_double_scientific_notation",
                 "struct_negative_int",
                 "struct_negative_float",
                 "struct_string",
                 "struct_entity",
                 "struct_id",
                 "struct_enum",
+                "struct_enum_underlying_i8",
                 "struct_bitmask",
                 "struct_i32_i32",
                 "struct_nested_i32",
@@ -606,6 +618,7 @@
                 "ser_deser_new_world_2_entities_w_named_parent_w_cycle",
                 "ser_deser_new_world_w_prefab",
                 "ser_deser_new_world_w_disabled",
+                "ser_deser_world_w_anon_recycled",
                 "ser_deser_restore_1_entity_to_empty_table",
                 "ser_deser_restore_1_entity_to_non_empty_table",
                 "ser_deser_restore_1_anon_entity_to_empty_table",
@@ -645,11 +658,16 @@
                 "ser_deser_w_alerts",
                 "ser_deser_w_alerts_w_progress",
                 "ser_deser_struct",
+                "ser_deser_struct_no_member_entities",
                 "ser_deser_anon_w_same_id_as_existing_named",
                 "ser_deser_named_to_different_table",
                 "ser_deser_named_child_to_different_table",
                 "ser_deser_with_child_tgt",
                 "ser_deser_with_child_tgt_no_child",
+                "ser_deser_prefab_instance_w_named_children",
+                "ser_deser_prefab_instance_w_named_children_parent_component",
+                "ser_deser_prefab_w_enum_constant_override",
+                "ser_deser_prefab_w_enum_constant_override_2",
                 "deser_invalid_entity_name",
                 "deser_unknown_component_w_spaces",
                 "deser_unknown_component_no_spaces",
@@ -804,7 +822,9 @@
                 "serialize_base_w_invalid_component",
                 "serialize_w_blacklist",
                 "serialize_w_allow_blacklist",
-                "serialize_w_partial_blacklist"
+                "serialize_w_partial_blacklist",
+                "serialize_value_pair",
+                "serialize_parent_component"
             ]
         }, {
             "id": "SerializeIterToJson",
@@ -825,10 +845,12 @@
                 "serialize_type_info_2_components",
                 "serialize_type_info_1_struct",
                 "serialize_type_info_1_component_1_struct",
+                "serialize_type_info_1_component_1_pair_tag",
                 "serialize_type_info_2_structs",
                 "serialize_type_info_w_unit",
                 "serialize_type_info_w_unit_quantity",
                 "serialize_type_info_w_unit_over",
+                "serialize_type_info_w_unit_array",
                 "serialize_w_entity_label",
                 "serialize_w_entity_label_w_str",
                 "serialize_entity_label_w_newline",
@@ -885,7 +907,13 @@
                 "serialize_16_fields",
                 "serialize_31_fields",
                 "serialize_32_fields",
-                "serialize_field_w_escaped_sep"
+                "serialize_field_w_escaped_sep",
+                "serialize_children_w_parent_component",
+                "serialize_children_w_parent_component_table",
+                "serialize_children_w_tag_w_parent_component",
+                "serialize_children_w_tag_w_parent_component_table",
+                "serialize_childof_var_w_parent",
+                "serialize_childof_wildcard_w_parent"
             ]
         }, {
             "id": "SerializeIterToRowJson",
@@ -1049,9 +1077,12 @@
                 "identifier_w_underscore",
                 "struct_w_ptr",
                 "private_members",
+                "only_private_members",
                 "enum_constant_w_name_prefix",
                 "enum_constant_w_type_prefix",
-                "enum_constant_w_name_type_prefix"
+                "enum_constant_w_name_type_prefix",
+                "struct_has_member_entities",
+                "fwd_decl"
             ]
         }, {
             "id": "OpaqueTypes",

@@ -494,6 +494,7 @@ void Module_rename_namespace_nested(void) {
 
     auto m = ecs.import<ns_parent::ns_child::Nested>();
     test_assert(m.has(flecs::Module));
+
     test_str(m.path(), "::ns::child::Nested");
     test_assert(ecs.lookup("::ns::child::Nested::NsType") != 0);
     test_assert(ecs.lookup("::ns_parent::ns_child::Nested::NsType") == 0);

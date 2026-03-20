@@ -14,8 +14,6 @@
 /* Retain captured commands for one minute at 60 FPS */
 #define FLECS_REST_COMMAND_RETAIN_COUNT (60 * 60)
 
-static ECS_TAG_DECLARE(EcsRestPlecs);
-
 typedef struct {
     char *cmds;
     ecs_time_t start_time;
@@ -307,6 +305,32 @@ ecs_entity_t flecs_rest_entity_from_path(
         reply->code = 404;
     }
     return e;
+}
+
+static
+bool flecs_rest_get_type_info(
+    ecs_world_t *world,
+    ecs_http_reply_t *reply,
+    const char *path)
+{
+    ecs_dbg_2("rest: request type info '%s'", path);
+
+    ecs_entity_t e;
+    if (!(e = flecs_rest_entity_from_path(world, reply, path))) {
+        return true;
+    }
+
+    char *json = ecs_type_info_to_json(world, e);
+    if (!json) {
+        flecs_reply_error(reply, "failed to serialize type info for '%s'", path);
+        reply->code = 500;
+        return true;
+    }
+
+    ecs_strbuf_appendstr(&reply->body, json);
+    ecs_os_free(json);
+
+    return true;
 }
 
 static
@@ -1694,6 +1718,7 @@ const char* flecs_rest_cmd_kind_to_str(
     case EcsCmdBulkNew: return "BulkNew";
     case EcsCmdAdd: return "Add";
     case EcsCmdRemove: return "Remove";
+    case EcsCmdSetDontFragment:
     case EcsCmdSet: return "Set";
     case EcsCmdEmplace: return "Emplace";
     case EcsCmdEnsure: return "Ensure";
@@ -1727,6 +1752,7 @@ bool flecs_rest_cmd_has_id(
     case EcsCmdAdd:
     case EcsCmdRemove:
     case EcsCmdSet:
+    case EcsCmdSetDontFragment:
     case EcsCmdEmplace:
     case EcsCmdEnsure:
     case EcsCmdModified:
@@ -1998,6 +2024,10 @@ bool flecs_rest_reply(
         } else if (!ecs_os_strncmp(req->path, "component/", 10)) {
             return flecs_rest_get_component(world, req, reply, &req->path[10]);
 
+        /* Type info endpoint */
+        } else if (!ecs_os_strncmp(req->path, "type_info/", 10)) {
+            return flecs_rest_get_type_info(world, reply, &req->path[10]);
+
         /* Query endpoint */
         } else if (!ecs_os_strcmp(req->path, "query")) {
             return flecs_rest_get_query(world, req, reply);
@@ -2014,7 +2044,7 @@ bool flecs_rest_reply(
         } else if (!ecs_os_strncmp(req->path, "components", 10)) {
             return flecs_rest_get_components(world, req, reply);
 
-        /* Tables endpoint */
+        /* Queries endpoint */
         } else if (!ecs_os_strncmp(req->path, "queries", 7)) {
             return flecs_rest_get_queries(world, req, reply);
 
@@ -2087,7 +2117,6 @@ ecs_http_server_t* ecs_rest_server_init(
     srv_ctx->world = world;
     srv_ctx->srv = srv;
     srv_ctx->rc = 1;
-    srv_ctx->srv = srv;
 
     /* Set build info on world so clients know which version they're using */
     ecs_id_t build_info = ecs_lookup(world, "flecs.core.BuildInfo");
@@ -2197,14 +2226,7 @@ void FlecsRestImport(
     ECS_MODULE(world, FlecsRest);
 
     ECS_IMPORT(world, FlecsPipeline);
-#ifdef FLECS_SCRIPT
-    ECS_IMPORT(world, FlecsScript);
-#endif
-#ifdef FLECS_DOC
-    ECS_IMPORT(world, FlecsDoc);
-    ecs_doc_set_brief(world, ecs_id(FlecsRest), 
-        "Module that implements Flecs REST API");
-#endif
+    ECS_IMPORT(world, FlecsMeta);
 
     ecs_set_name_prefix(world, "Ecs");
 
@@ -2219,7 +2241,7 @@ void FlecsRestImport(
     });
 
     ecs_system(world, {
-        .entity = ecs_entity(world, {.name = "DequeueRest", .add = ecs_ids( ecs_dependson(EcsPostFrame))}),
+        .entity = ecs_entity(world, { .name = "DequeueRest", .add = ecs_ids( ecs_dependson(EcsPostFrame)) }),
         .query.terms = {
             { .id = ecs_id(EcsRest) },
         },
@@ -2232,11 +2254,11 @@ void FlecsRestImport(
             .terms = {{ .id = EcsDisabled, .src.id = ecs_id(FlecsRest) }}
         },
         .events = {EcsOnAdd, EcsOnRemove},
-        .callback = DisableRest
+        .callback = DisableRest,
+        .global_observer = true
     });
 
     ecs_set_name_prefix(world, "EcsRest");
-    ECS_TAG_DEFINE(world, EcsRestPlecs);
 
     /* Enable frame time measurements so we're guaranteed to have a delta time
      * value to pass into the HTTP server. */

@@ -3,15 +3,12 @@
  * @brief Data structure for fast table iteration/lookups.
  * 
  * A table cache is a data structure that provides constant time operations for
- * insertion and removal of tables, and to testing whether a table is registered
+ * insertion and removal of tables, and for testing whether a table is registered
  * with the cache. A table cache also provides functions to iterate the tables
  * in a cache.
  * 
  * The world stores a table cache per (component) id inside the component record 
  * administration. Cached queries store a table cache with matched tables.
- * 
- * A table cache has separate lists for non-empty tables and empty tables. This
- * improves performance as applications don't waste time iterating empty tables.
  */
 
 #include "../private_api.h"
@@ -99,9 +96,8 @@ void ecs_table_cache_insert(
 
     flecs_table_cache_list_insert(cache, result);
 
-    if (table) {
-        ecs_map_insert_ptr(&cache->index, table->id, result);
-    }
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_map_insert_ptr(&cache->index, table->id, result);
 
     ecs_assert(cache->tables.first != NULL, ECS_INTERNAL_ERROR, NULL);
 }
@@ -145,16 +141,9 @@ void* ecs_table_cache_get(
     const ecs_table_t *table)
 {
     ecs_assert(cache != NULL, ECS_INTERNAL_ERROR, NULL);
-    if (table) {
-        if (ecs_map_is_init(&cache->index)) {
-            return ecs_map_get_deref(&cache->index, void**, table->id);
-        }
-        return NULL;
-    } else {
-        ecs_table_cache_hdr_t *elem = cache->tables.first;
-        ecs_assert(!elem || elem->table == NULL, ECS_INTERNAL_ERROR, NULL);
-        return elem;
-    }
+    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(ecs_map_is_init(&cache->index), ECS_INTERNAL_ERROR, NULL);
+    return ecs_map_get_deref(&cache->index, void**, table->id);
 }
 
 void* ecs_table_cache_remove(

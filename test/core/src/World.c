@@ -2730,6 +2730,28 @@ void World_delete_empty_component_record_w_shrink(void) {
     ecs_fini(world);
 }
 
+void World_delete_empty_hi_component_record_w_shrink(void) {
+    ecs_world_t *world = ecs_mini();
+
+    ECS_TAG(world, Rel);
+    ECS_TAG(world, Tgt);
+
+    ecs_entity_t e = ecs_new(world);
+    ecs_add_pair(world, e, Rel, Tgt);
+
+    test_assert(flecs_components_get(world, ecs_pair(Rel, Tgt)) != NULL);
+
+    ecs_delete(world, e);
+    
+    test_assert(flecs_components_get(world, ecs_pair(Rel, Tgt)) != NULL);
+
+    ecs_shrink(world);
+
+    test_assert(flecs_components_get(world, ecs_pair(Rel, Tgt)) == NULL);
+
+    ecs_fini(world);
+}
+
 void World_delete_empty_queried_for_component_record_w_shrink(void) {
     ecs_world_t *world = ecs_mini();
 
@@ -2901,6 +2923,49 @@ void World_dont_delete_non_empty_dont_fragment_component_record_w_shrink(void) {
     ecs_fini(world);
 }
 
+
+void World_remove_from_traversable_after_shrink(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Position);
+
+    ecs_observer(world, {
+        .query.terms = {{ ecs_id(Position) }},
+        .events = { EcsOnRemove },
+        .callback = DummyHook
+    });
+
+    ecs_entity_t p = ecs_new_w(world, Position);
+    ecs_entity_t c = ecs_new_w_pair(world, EcsChildOf, p);
+
+    ecs_delete(world, c);
+
+    ecs_shrink(world);
+
+    ecs_remove(world, p, Position);
+
+    test_int(dummy_hook_invoked, 1);
+
+    ecs_fini(world);
+}
+
+void World_shrink_non_fragmenting_childof(void) {
+    ecs_world_t *world = ecs_init();
+
+    ECS_COMPONENT(world, Position);
+
+    ecs_entity_t p = ecs_new(world);
+    ecs_insert(world, ecs_value(EcsParent, {p}));
+
+    test_assert(flecs_components_get(world, ecs_childof(p)) != NULL);
+
+    ecs_shrink(world);
+
+    test_assert(flecs_components_get(world, ecs_childof(p)) != NULL);
+
+    ecs_fini(world);
+}
+
 void World_mini_all_tables_builtin(void) {
     ecs_world_t *world = ecs_mini();
 
@@ -3013,7 +3078,7 @@ void World_remove_builtin_from_builtin(void) {
     
     test_expect_abort();
 
-    ecs_remove_id(world, ecs_id(EcsComponent), EcsFinal);
+    ecs_remove_id(world, EcsChildOf, EcsExclusive);
 }
 
 void World_reparent_builtin(void) {
@@ -3733,4 +3798,50 @@ void World_add_traversable_after_pair_query(void) {
     test_expect_abort();
 
     ecs_add_id(world, ecs_id(Position), EcsTraversable);
+}
+
+void World_set_component_after_in_use(void) {
+    ecs_world_t *world = ecs_mini();
+
+    ecs_entity_t c = ecs_new(world);
+    ecs_entity_t tgt_a = ecs_new(world);
+    ecs_entity_t tgt_b = ecs_new(world);
+    ecs_entity_t rel_a = ecs_new(world);
+    ecs_entity_t rel_b = ecs_new(world);
+
+    ecs_component_record_t *cr_c = flecs_components_ensure(world, c);
+    test_assert(flecs_component_get_type_info(cr_c) == NULL);
+
+    ecs_component_record_t *cr_c_tgt_a = flecs_components_ensure(world, ecs_pair(c, tgt_a));
+    test_assert(flecs_component_get_type_info(cr_c_tgt_a) == NULL);
+
+    ecs_component_record_t *cr_c_tgt_b = flecs_components_ensure(world, ecs_pair(c, tgt_b));
+    test_assert(flecs_component_get_type_info(cr_c_tgt_b) == NULL);
+
+    ecs_component_record_t *cr_rel_a_c = flecs_components_ensure(world, ecs_pair(rel_a, c));
+    test_assert(flecs_component_get_type_info(cr_rel_a_c) == NULL);
+
+    ecs_component_record_t *cr_rel_b_c = flecs_components_ensure(world, ecs_pair(rel_b, c));
+    test_assert(flecs_component_get_type_info(cr_rel_b_c) == NULL);
+
+    ecs_component_record_t *cr_c_wc = flecs_components_ensure(world, ecs_pair(c, EcsWildcard));
+    test_assert(flecs_component_get_type_info(cr_c_wc) == NULL);
+
+    ecs_component_record_t *cr_wc_c = flecs_components_ensure(world, ecs_pair(EcsWildcard, c));
+    test_assert(flecs_component_get_type_info(cr_wc_c) == NULL);
+
+    ecs_set(world, c, EcsComponent, {4, 4});
+
+    const ecs_type_info_t *ti = ecs_get_type_info(world, c);
+
+    test_assert(flecs_component_get_type_info(cr_c) == ti);
+    test_assert(flecs_component_get_type_info(cr_c_tgt_a) == ti);
+    test_assert(flecs_component_get_type_info(cr_c_tgt_b) == ti);
+    test_assert(flecs_component_get_type_info(cr_rel_a_c) == ti);
+    test_assert(flecs_component_get_type_info(cr_rel_b_c) == ti);
+
+    test_assert(flecs_component_get_type_info(cr_c_wc) == NULL);
+    test_assert(flecs_component_get_type_info(cr_wc_c) == NULL);
+
+    ecs_fini(world);
 }

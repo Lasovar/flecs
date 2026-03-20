@@ -105,29 +105,14 @@ void* ecs_field_w_size(
         "missing size for field %d", index);
     ecs_check(ecs_field_size(it, index) == size || 
         !ecs_field_size(it, index),
-            ECS_INVALID_PARAMETER, "mismatching size for field %d", index);
+            ECS_INVALID_PARAMETER, 
+            "mismatching size for field %d (expected '%s')", 
+            index,
+            flecs_errstr(ecs_id_str(it->world, it->ids[index])));
     (void)size;
 
-    if (it->ptrs && !it->offset) {
-        void *ptr = it->ptrs[index];
-        if (ptr) {
-#ifdef FLECS_DEBUG
-            if (it->trs[index]) {
-                /* Make sure that address in ptrs array is the same as what this 
-                * function would have returned if no ptrs array was set. */
-                void **temp_ptrs = it->ptrs;
-                ECS_CONST_CAST(ecs_iter_t*, it)->ptrs = NULL;
-                ecs_assert(ptr == ecs_field_w_size(it, size, index), 
-                    ECS_INTERNAL_ERROR, NULL);
-                ECS_CONST_CAST(ecs_iter_t*, it)->ptrs = temp_ptrs;
-            } else {
-                /* We're just passing in a pointer to a value that may not be
-                 * a component on the entity (such as a pointer to a new value
-                 * in an on_replace hook). */
-            }
-#endif
-            return ptr;
-        }
+    if (it->ptrs) {
+        return it->ptrs[index];
     }
 
     const ecs_table_record_t *tr = it->trs[index];
@@ -933,8 +918,8 @@ ecs_iter_t ecs_worker_iter(
     ecs_check(it != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(it->next != NULL, ECS_INVALID_PARAMETER, NULL);
     ecs_check(count > 0, ECS_INVALID_PARAMETER, NULL);
-    ecs_check(index >= 0, ECS_INVALID_PARAMETER, 
-        "invalid field index %d", index);
+    ecs_check(index >= 0, ECS_INVALID_PARAMETER,
+        "invalid worker index %d", index);
     ecs_check(index < count, ECS_INVALID_PARAMETER, NULL);
 
     ecs_iter_t result = *it;

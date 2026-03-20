@@ -220,7 +220,7 @@ bool flecs_pipeline_check_terms(
     int32_t t, term_count = query->term_count;
 
     /* Check This terms first. This way if a term indicating writing to a stage
-     * was added before the term, it won't cause merging. */
+     * was added before a This term, it won't cause merging. */
     for (t = 0; t < term_count; t ++) {
         ecs_term_t *term = &terms[t];
         if (ecs_term_match_this(term)) {
@@ -452,8 +452,10 @@ bool flecs_pipeline_build(
 
     pq->match_count = new_match_count;
 
-    ecs_assert(pq->cur_op <= ecs_vec_last_t(&pq->ops, ecs_pipeline_op_t),
-        ECS_INTERNAL_ERROR, NULL);
+    if (ecs_vec_count(&pq->ops)) {
+        ecs_assert((pq->cur_op <= ecs_vec_last_t(&pq->ops, ecs_pipeline_op_t)),
+            ECS_INTERNAL_ERROR, NULL);
+    }
 
     return true;
 }
@@ -520,7 +522,7 @@ void ecs_run_pipeline(
         pipeline = world->pipeline;
     }
 
-    /* create any worker task threads request */
+    /* Create any worker task threads requested */
     if (ecs_using_task_threads(world)) {
         flecs_create_worker_threads(world);
     }
@@ -555,7 +557,7 @@ int32_t flecs_run_pipeline_ops(
     for (; i < count; i++) {
         ecs_system_t* sys = systems[i];
 
-        /* Keep track of the last frame for which the system has ran, so we
+        /* Keep track of the last frame for which the system has run, so we
          * know from where to resume the schedule in case the schedule
          * changes during a merge. */
         if (stage_index == 0) {
@@ -748,7 +750,7 @@ bool ecs_progress(
         flecs_run_startup_systems(world);
     }
 
-    /* create any worker task threads request */
+    /* Create any worker task threads requested */
     if (ecs_using_task_threads(world)) {
         flecs_create_worker_threads(world);
     }
@@ -842,7 +844,6 @@ ecs_entity_t ecs_pipeline_init(
     ecs_pipeline_state_t *pq = ecs_os_calloc_t(ecs_pipeline_state_t);
     pq->query = query;
     pq->match_count = -1;
-    pq->cr_inactive = flecs_components_ensure(world, EcsEmpty);
     ecs_set(world, result, EcsPipeline, { pq });
 
     return result;
@@ -885,11 +886,7 @@ void FlecsPipelineImport(
 {
     ECS_MODULE(world, FlecsPipeline);
     ECS_IMPORT(world, FlecsSystem);
-#ifdef FLECS_DOC
-    ECS_IMPORT(world, FlecsDoc);
-    ecs_doc_set_brief(world, ecs_id(FlecsPipeline), 
-        "Module that schedules and runs systems");
-#endif
+
     ecs_set_name_prefix(world, "Ecs");
 
     flecs_bootstrap_component(world, EcsPipeline);

@@ -69,8 +69,8 @@ void flecs_add_to_root_table(
     ecs_world_t *world,
     ecs_entity_t e);
 
-/* Mark an entity as being watched. This is used to trigger automatic rematching
- * when entities used in system expressions change their components. */
+/* Add a flag to an entity. This is used to trigger automatic rematching
+ * when entities used in query expressions change their components. */
 void flecs_add_flag(
     ecs_world_t *world,
     ecs_entity_t entity,
@@ -151,7 +151,8 @@ void flecs_on_delete(
     ecs_world_t *world,
     ecs_id_t id,
     ecs_entity_t action,
-    bool delete_id);
+    bool delete_id,
+    bool force_delete);
 
 /* Remove non-fragmenting components from entity */
 void flecs_entity_remove_non_fragmenting(
@@ -162,5 +163,16 @@ void flecs_entity_remove_non_fragmenting(
 const char* flecs_entity_invalid_reason(
     const ecs_world_t *world,
     ecs_entity_t entity);
+
+ecs_table_range_t flecs_range_from_entity(
+    const ecs_world_t *world,
+    ecs_entity_t e);
+
+ecs_entity_t flecs_set_identifier(
+    ecs_world_t *world,
+    ecs_stage_t *stage,
+    ecs_entity_t entity,
+    ecs_entity_t tag,
+    const char *name);
 
 #endif

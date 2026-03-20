@@ -24,7 +24,7 @@ static void flecs_constants_dtor(
 static void flecs_ordered_constants_dtor(
     ecs_vec_t *ordered_constants)
 {
-    /* shallow fini of is ok since map deallocs name c-string member */
+    /* shallow fini is ok since map deallocs name c-string member */
     ecs_vec_fini_t(NULL, ordered_constants, ecs_enum_constant_t);
 }
 
@@ -488,7 +488,7 @@ ecs_entity_t ecs_enum_init(
             if (m_desc->value) {
                 if (ut_is_unsigned) {
                     char *path = ecs_get_path(world, c);
-                    ecs_err("use desc::value_unsigned for constant '%s' which"
+                    ecs_err("use desc::value_unsigned for constant '%s' which "
                         "has an unsigned underlying type", path);
                     ecs_os_free(path);
                     return 0;
@@ -497,7 +497,7 @@ ecs_entity_t ecs_enum_init(
             } else {
                 if (!ut_is_unsigned) {
                     char *path = ecs_get_path(world, c);
-                    ecs_err("use desc::value for constant '%s' which"
+                    ecs_err("use desc::value for constant '%s' which "
                         "has a signed underlying type", path);
                     ecs_os_free(path);
                     return 0;
@@ -627,31 +627,31 @@ void flecs_meta_enum_init(
     ecs_add_pair(world, ecs_id(EcsBitmask), EcsWith, ecs_id(EcsConstants));
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = { .id = ecs_id(EcsEnum) },
         .events = {EcsOnSet},
-        .callback = flecs_add_enum
+        .callback = flecs_add_enum,
+        .global_observer = true
     });
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = { .id = ecs_id(EcsBitmask) },
         .events = {EcsOnAdd},
-        .callback = flecs_add_bitmask
+        .callback = flecs_add_bitmask,
+        .global_observer = true
     });
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = { .id = EcsConstant },
         .events = {EcsOnAdd},
-        .callback = flecs_add_constant
+        .callback = flecs_add_constant,
+        .global_observer = true
     });
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { .parent = EcsFlecsInternals }),
         .query.terms[0] = { .id = ecs_pair(EcsConstant, EcsWildcard) },
         .events = {EcsOnSet},
-        .callback = flecs_add_constant
+        .callback = flecs_add_constant,
+        .global_observer = true
     });
 
     ecs_set(world, ecs_id(EcsEnum),    EcsDefaultChildComponent, {EcsConstant});

@@ -2,7 +2,7 @@
  * @file addons/script.h
  * @brief Flecs script module.
  *
- * For script, see examples/script.
+ * For script examples, see examples/script.
  */
 
 #ifdef FLECS_SCRIPT
@@ -10,7 +10,7 @@
 /**
  * @defgroup c_addons_script Flecs script
  * @ingroup c_addons
- * DSL for loading scenes, assets and configuration.
+ * DSL for loading scenes, assets, and configuration.
  *
  * @{
  */
@@ -36,6 +36,9 @@ extern "C" {
 
 #define FLECS_SCRIPT_FUNCTION_ARGS_MAX (16)
 
+/* Must be the same as EcsPrimitiveKindLast */
+#define FLECS_SCRIPT_VECTOR_FUNCTION_COUNT (18)
+
 FLECS_API
 extern ECS_COMPONENT_DECLARE(EcsScript);
 
@@ -51,58 +54,61 @@ extern ECS_COMPONENT_DECLARE(EcsScriptFunction);
 FLECS_API
 extern ECS_COMPONENT_DECLARE(EcsScriptMethod);
 
+FLECS_API
+extern ECS_DECLARE(EcsScriptVectorType);
+
 /* Script template. */
 typedef struct ecs_script_template_t ecs_script_template_t;
 
 /** Script variable. */
 typedef struct ecs_script_var_t {
-    const char *name;
-    ecs_value_t value;
-    const ecs_type_info_t *type_info;
-    int32_t sp;
-    bool is_const;
+    const char *name;                    /**< Variable name. */
+    ecs_value_t value;                   /**< Variable value. */
+    const ecs_type_info_t *type_info;    /**< Type information. */
+    int32_t sp;                          /**< Stack pointer. */
+    bool is_const;                       /**< Whether the variable is constant. */
 } ecs_script_var_t;
 
 /** Script variable scope. */
 typedef struct ecs_script_vars_t {
-    struct ecs_script_vars_t *parent;
-    int32_t sp;
+    struct ecs_script_vars_t *parent;    /**< Parent variable scope. */
+    int32_t sp;                          /**< Stack pointer for this scope. */
 
-    ecs_hashmap_t var_index;
-    ecs_vec_t vars;
+    ecs_hashmap_t var_index;             /**< Index for variable name lookups. */
+    ecs_vec_t vars;                      /**< Vector of variables in this scope. */
 
-    const ecs_world_t *world;
-    struct ecs_stack_t *stack;
-    ecs_stack_cursor_t *cursor;
-    ecs_allocator_t *allocator;
+    const ecs_world_t *world;            /**< The world. */
+    struct ecs_stack_t *stack;           /**< Stack allocator for variable storage. */
+    ecs_stack_cursor_t *cursor;          /**< Cursor into the stack allocator. */
+    ecs_allocator_t *allocator;          /**< General purpose allocator. */
 } ecs_script_vars_t;
 
 /** Script object. */
 typedef struct ecs_script_t {
-    ecs_world_t *world;
-    const char *name;
-    const char *code;
+    ecs_world_t *world;    /**< The world. */
+    const char *name;      /**< Script name. */
+    const char *code;      /**< Script source code. */
 } ecs_script_t;
 
-/* Runtime for executing scripts */
+/** Runtime for executing scripts. */
 typedef struct ecs_script_runtime_t ecs_script_runtime_t;
 
 /** Script component. 
  * This component is added to the entities of managed scripts and templates.
  */
 typedef struct EcsScript {
-    char *filename;
-    char *code;
-    char *error; /* Set if script evaluation had errors */
-    ecs_script_t *script;
-    ecs_script_template_t *template_; /* Only set for template scripts */
+    char *filename;                     /**< Script filename. */
+    char *code;                         /**< Script source code. */
+    char *error;                        /**< Set if script evaluation had errors. */
+    ecs_script_t *script;               /**< Parsed script object. */
+    ecs_script_template_t *template_;   /**< Only set for template scripts. */
 } EcsScript;
 
 /** Script function context. */
 typedef struct ecs_function_ctx_t {
-    ecs_world_t *world;
-    ecs_entity_t function;
-    void *ctx;
+    ecs_world_t *world;       /**< The world. */
+    ecs_entity_t function;    /**< The function entity. */
+    void *ctx;                /**< User context. */
 } ecs_function_ctx_t;
 
 /** Script function callback. */
@@ -112,10 +118,18 @@ typedef void(*ecs_function_callback_t)(
     const ecs_value_t *argv,
     ecs_value_t *result);
 
+/** Script vector function callback. */
+typedef void(*ecs_vector_function_callback_t)(
+    const ecs_function_ctx_t *ctx,
+    int32_t argc,
+    const ecs_value_t *argv,
+    ecs_value_t *result,
+    int32_t elem_count);
+
 /** Function argument type. */
 typedef struct ecs_script_parameter_t {
-    const char *name;
-    ecs_entity_t type;
+    const char *name;       /**< Parameter name. */
+    ecs_entity_t type;      /**< Parameter type. */
 } ecs_script_parameter_t;
 
 /** Const component.
@@ -126,39 +140,37 @@ typedef struct EcsScriptConstVar {
     const ecs_type_info_t *type_info;
 } EcsScriptConstVar;
 
-/** Function component.
- * This component describes a function that can be called from a script.
- */
-typedef struct EcsScriptFunction {
+struct ecs_script_function_t {
     ecs_entity_t return_type;
     ecs_vec_t params; /* vec<ecs_script_parameter_t> */
     ecs_function_callback_t callback;
+    ecs_vector_function_callback_t vector_callbacks[FLECS_SCRIPT_VECTOR_FUNCTION_COUNT];
     void *ctx;
-} EcsScriptFunction;
+};
+
+/** Function component.
+ * This component describes a function that can be called from a script.
+ */
+typedef struct ecs_script_function_t EcsScriptFunction;
 
 /** Method component. 
  * This component describes a method that can be called from a script. Methods
  * are functions that can be called on instances of a type. A method entity is
  * stored in the scope of the type it belongs to.
  */
-typedef struct EcsScriptMethod {
-    ecs_entity_t return_type;
-    ecs_vec_t params; /* vec<ecs_script_parameter_t> */
-    ecs_function_callback_t callback;
-    void *ctx;
-} EcsScriptMethod;
+typedef struct ecs_script_function_t EcsScriptMethod;
 
-/* Parsing & running scripts */
+/* Parsing and running scripts */
 
-/** Used with ecs_script_parse() and ecs_script_eval() */
+/** Used with ecs_script_parse() and ecs_script_eval(). */
 typedef struct ecs_script_eval_desc_t {
-    ecs_script_vars_t *vars;       /**< Variables used by script */
-    ecs_script_runtime_t *runtime; /**< Reusable runtime (optional) */
+    ecs_script_vars_t *vars;       /**< Variables used by script. */
+    ecs_script_runtime_t *runtime; /**< Reusable runtime (optional). */
 } ecs_script_eval_desc_t;
 
 /** Used to capture error output from script evaluation. */
 typedef struct ecs_script_eval_result_t {
-    char *error;
+    char *error;       /**< Error message, or NULL if no error. Must be freed by the application. */
 } ecs_script_eval_result_t;
 
 /** Parse script.
@@ -174,7 +186,7 @@ typedef struct ecs_script_eval_result_t {
  * by the application.
  * 
  * @param world The world.
- * @param name Name of the script (typically a file/module name).
+ * @param name Name of the script (typically a file or module name).
  * @param code The script code.
  * @param desc Parameters for script runtime.
  * @param result Output of script evaluation.
@@ -201,6 +213,7 @@ ecs_script_t* ecs_script_parse(
  * 
  * @param script The script.
  * @param desc Parameters for script runtime.
+ * @param result Output of script evaluation (optional).
  * @return Zero if success, non-zero if failed.
 */
 FLECS_API
@@ -235,6 +248,7 @@ void ecs_script_free(
  * @param world The world.
  * @param name The script name (typically the file).
  * @param code The script.
+ * @param result Output of script evaluation (optional).
  * @return Zero if success, non-zero otherwise.
  */
 FLECS_API
@@ -260,7 +274,7 @@ int ecs_script_run_file(
 
 /** Create runtime for script.
  * A script runtime is a container for any data created during script 
- * evaluation. By default calling ecs_script_run() or ecs_script_eval() will
+ * evaluation. By default, calling ecs_script_run() or ecs_script_eval() will
  * create a runtime on the spot. A runtime can be created in advance and reused
  * across multiple script evaluations to improve performance.
  * 
@@ -286,9 +300,10 @@ void ecs_script_runtime_free(
 /** Convert script AST to string.
  * This operation converts the script abstract syntax tree to a string, which
  * can be used to debug a script.
- * 
+ *
  * @param script The script.
  * @param buf The buffer to write to.
+ * @param colors Whether to include ANSI color codes in the output.
  * @return Zero if success, non-zero if failed.
  */
 FLECS_API
@@ -300,8 +315,9 @@ int ecs_script_ast_to_buf(
 /** Convert script AST to string.
  * This operation converts the script abstract syntax tree to a string, which
  * can be used to debug a script.
- * 
+ *
  * @param script The script.
+ * @param colors Whether to include ANSI color codes in the output.
  * @return The string if success, NULL if failed.
  */
 FLECS_API
@@ -312,11 +328,11 @@ char* ecs_script_ast_to_str(
 
 /* Managed scripts (script associated with entity that outlives the function) */
 
-/** Used with ecs_script_init() */
+/** Used with ecs_script_init(). */
 typedef struct ecs_script_desc_t {
-    ecs_entity_t entity;   /* Set to customize entity handle associated with script */
-    const char *filename;  /* Set to load script from file */
-    const char *code;      /* Set to parse script from string */
+    ecs_entity_t entity;   /**< Set to customize entity handle associated with script. */
+    const char *filename;  /**< Set to load script from file. */
+    const char *code;      /**< Set to parse script from string. */
 } ecs_script_desc_t;
 
 /** Load managed script.
@@ -328,6 +344,7 @@ typedef struct ecs_script_desc_t {
  *
  * @param world The world.
  * @param desc Script descriptor.
+ * @return The script entity.
  */
 FLECS_API
 ecs_entity_t ecs_script_init(
@@ -341,8 +358,9 @@ ecs_entity_t ecs_script_init(
  *
  * @param world The world.
  * @param script The script entity.
- * @param instance An template instance (optional).
+ * @param instance A template instance (optional).
  * @param code The script code.
+ * @return Zero if success, non-zero if failed.
  */
 FLECS_API
 int ecs_script_update(
@@ -375,12 +393,13 @@ void ecs_script_clear(
  * Use the `ecs_script_vars_push()` and `ecs_script_vars_pop()` functions to
  * push and pop variable scopes.
  * 
- * When a variable contains allocated resources (e.g. a string), its resources
+ * When a variable contains allocated resources (e.g., a string), its resources
  * will be freed when `ecs_script_vars_pop()` is called on the scope, the
  * ecs_script_vars_t::type_info field is initialized for the variable, and 
  * `ecs_type_info_t::hooks::dtor` is set.
  * 
  * @param world The world.
+ * @return The new root variable scope.
  */
 FLECS_API
 ecs_script_vars_t* ecs_script_vars_init(
@@ -496,7 +515,7 @@ ecs_script_var_t* ecs_script_vars_from_sp(
     int32_t sp);
 
 /** Print variables.
- * This operation prints all variables in the vars scope and parent scopes.asm
+ * This operation prints all variables in the vars scope and parent scopes.
  * 
  * @param vars The variable scope.
  */
@@ -517,13 +536,13 @@ void ecs_script_vars_set_size(
     ecs_script_vars_t *vars,
     int32_t count);
 
-/** Convert iterator to vars
+/** Convert iterator to vars.
  * This operation converts an iterator to a variable array. This allows for
  * using iterator results in expressions. The operation only converts a
  * single result at a time, and does not progress the iterator.
  *
  * Iterator fields with data will be made available as variables with as name
- * the field index (e.g. "$1"). The operation does not check if reflection data
+ * the field index (e.g., "$1"). The operation does not check if reflection data
  * is registered for a field type. If no reflection data is registered for the
  * type, using the field variable in expressions will fail.
  *
@@ -560,17 +579,17 @@ void ecs_script_vars_from_iter(
 
 /** Used with ecs_expr_run(). */
 typedef struct ecs_expr_eval_desc_t {
-    const char *name;                /**< Script name */
-    const char *expr;                /**< Full expression string */
-    const ecs_script_vars_t *vars;   /**< Variables accessible in expression */
-    ecs_entity_t type;               /**< Type of parsed value (optional) */
-    ecs_entity_t (*lookup_action)(   /**< Function for resolving entity identifiers */
+    const char *name;                /**< Script name. */
+    const char *expr;                /**< Full expression string. */
+    const ecs_script_vars_t *vars;   /**< Variables accessible in expression. */
+    ecs_entity_t type;               /**< Type of parsed value (optional). */
+    ecs_entity_t (*lookup_action)(   /**< Function for resolving entity identifiers. */
         const ecs_world_t*,
         const char *value,
         void *ctx);
-    void *lookup_ctx;                /**< Context passed to lookup function */
+    void *lookup_ctx;                /**< Context passed to lookup function. */
 
-    /** Disable constant folding (slower evaluation, faster parsing) */
+    /** Disable constant folding (slower evaluation, faster parsing). */
     bool disable_folding;
 
     /** This option instructs the expression runtime to lookup variables by 
@@ -579,12 +598,12 @@ typedef struct ecs_expr_eval_desc_t {
     bool disable_dynamic_variable_binding;
 
     /** Allow for unresolved identifiers when parsing. Useful when entities can
-     * be created in between parsing & evaluating. */
+     * be created in between parsing and evaluating. */
     bool allow_unresolved_identifiers;
 
-    ecs_script_runtime_t *runtime;   /**< Reusable runtime (optional) */
+    ecs_script_runtime_t *runtime;   /**< Reusable runtime (optional). */
 
-    void *script_visitor;            /**< For internal usage */
+    void *script_visitor;            /**< For internal usage. */
 } ecs_expr_eval_desc_t;
 
 /** Run expression.
@@ -597,7 +616,7 @@ typedef struct ecs_expr_eval_desc_t {
  *
  * @param world The world.
  * @param ptr The pointer to the expression to parse.
- * @param value The value containing type & pointer to write to.
+ * @param value The value containing type and pointer to write to.
  * @param desc Configuration parameters for the parser.
  * @return Pointer to the character after the last one read, or NULL if failed.
  */
@@ -654,6 +673,7 @@ int ecs_expr_eval(
  * @param world The world.
  * @param str The string to evaluate.
  * @param vars The variables to use for evaluation.
+ * @return String with interpolated expressions, or NULL if failed.
  */
 FLECS_API
 char* ecs_script_string_interpolate(
@@ -664,18 +684,18 @@ char* ecs_script_string_interpolate(
 
 /* Global const variables */
 
-/** Used with ecs_const_var_init */
+/** Used with ecs_const_var_init(). */
 typedef struct ecs_const_var_desc_t {
-    /* Variable name. */
+    /** Variable name. */
     const char *name;
 
-    /* Variable parent (namespace). */
+    /** Variable parent (namespace). */
     ecs_entity_t parent;
 
-    /* Variable type. */
+    /** Variable type. */
     ecs_entity_t type;
 
-    /* Pointer to value of variable. The value will be copied to an internal
+    /** Pointer to value of variable. The value will be copied to an internal
      * storage and does not need to be kept alive. */
     void *value;
 } ecs_const_var_desc_t;
@@ -695,12 +715,13 @@ ecs_entity_t ecs_const_var_init(
     ecs_const_var_init(world, &(ecs_const_var_desc_t)__VA_ARGS__)
 
 
-/** Returns value for a const variable. 
+/** Return the value for a const variable.
  * This returns the value for a const variable that is created either with
- * ecs_const_var_init, or in a script with "export const v: ...".
- * 
+ * ecs_const_var_init(), or in a script with "export const v: ...".
+ *
  * @param world The world.
- * @param var The variable associated with the entity. 
+ * @param var The variable associated with the entity.
+ * @return The value of the const variable.
  */
 FLECS_API
 ecs_value_t ecs_const_var_get(
@@ -709,7 +730,13 @@ ecs_value_t ecs_const_var_get(
 
 /* Functions */
 
-/** Used with ecs_function_init and ecs_method_init */
+/** Vector function callbacks for different element types. */
+typedef struct ecs_vector_fn_callbacks_t {
+    ecs_vector_function_callback_t i8;   /**< Callback for i8 element type. */
+    ecs_vector_function_callback_t i32;  /**< Callback for i32 element type. */
+} ecs_vector_fn_callbacks_t;
+
+/** Used with ecs_function_init() and ecs_method_init(). */
 typedef struct ecs_function_desc_t {
     /** Function name. */
     const char *name;
@@ -726,6 +753,55 @@ typedef struct ecs_function_desc_t {
 
     /** Function implementation. */
     ecs_function_callback_t callback;
+
+    /** Vector function implementations.
+     * Set these callbacks if a function has one or more arguments of type
+     * flecs.script.vector, and optionally a return type of flecs.script.vector.
+     * 
+     * The flecs.script.vector type allows a function to be called with types
+     * that meet the following constraints:
+     * - The same type is provided for all arguments of type flecs.script.vector
+     * - The provided type has one or more members of the same type
+     * - The member type must be a primitive type
+     * - The vector_callbacks array has an implementation for the primitive type.
+     * 
+     * This allows for statements like:
+     * @code
+     * const a = Rgb: {100, 150, 250}
+     * const b = Rgb: {10, 10, 10}
+     * const r = lerp(a, b, 0.1)
+     * @endcode
+     * 
+     * which would otherwise have to be written out as:
+     * 
+     * @code
+     * const r = Rgb: {
+     *   lerp(a.r, b.r, 0.1),
+     *   lerp(a.g, b.g, 0.1),
+     *   lerp(a.b, b.b, 0.1)
+     * }
+     * @endcode
+     * 
+     * To register vector functions, do:
+     * 
+     * @code
+     * ecs_function(world, {
+     *     .name = "lerp",
+     *     .return_type = EcsScriptVectorType,
+     *     .params = {
+     *         { .name = "a", .type = EcsScriptVectorType },
+     *         { .name = "b", .type = EcsScriptVectorType },
+     *         { .name = "t", .type = ecs_id(ecs_f64_t) }
+     *     },
+     *     .vector_callbacks = {
+     *       [EcsF32] = flecs_lerp32,
+     *       [EcsF64] = flecs_lerp64
+     *     }
+     * });
+     * @endcode
+     * 
+     */
+    ecs_vector_function_callback_t vector_callbacks[FLECS_SCRIPT_VECTOR_FUNCTION_COUNT];
 
     /** Context passed to function implementation. */
     void *ctx;
@@ -754,9 +830,9 @@ ecs_entity_t ecs_function_init(
  * Methods automatically receive the instance on which the method is invoked as
  * first argument.
  * 
- * @param world Method The world.
+ * @param world The world.
  * @param desc Method init parameters.
- * @return The function, or 0 if failed.
+ * @return The method, or 0 if failed.
 */
 FLECS_API
 ecs_entity_t ecs_method_init(
@@ -800,7 +876,7 @@ int ecs_ptr_to_expr_buf(
     const void *data,
     ecs_strbuf_t *buf);
 
-/** Similar as ecs_ptr_to_expr(), but serializes values to string.
+/** Similar to ecs_ptr_to_expr(), but serializes values to string.
  * Whereas the output of ecs_ptr_to_expr() is a valid expression, the output of
  * ecs_ptr_to_str() is a string representation of the value. In most cases the
  * output of the two operations is the same, but there are some differences:

@@ -90,8 +90,25 @@ int flecs_type_find(
         if (ecs_id_match(cur, id)) {
             return i;
         }
-        if (cur > id) {
+        if (!ECS_IS_PAIR(id) && (cur > id)) {
             return -1;
+        }
+    }
+
+    return -1;
+}
+
+static
+int flecs_type_find_ignoring_generation(
+    const ecs_type_t *type,
+    ecs_id_t id)
+{
+    ecs_id_t *array = type->array;
+    int32_t i, count = type->count;
+
+    for (i = 0; i < count; i ++) {
+        if ((uint32_t)array[i] == (uint32_t)id) {
+            return i;
         }
     }
 
@@ -233,6 +250,9 @@ int flecs_type_new_without(
     ecs_id_t *dst_array = flecs_walloc_n(world, ecs_id_t, dst_count);
     dst->array = dst_array;
 
+    ecs_assert(dst_array != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(src_array != NULL, ECS_INTERNAL_ERROR, NULL);
+
     if (at) {
         ecs_os_memcpy_n(dst_array, src_array, ecs_id_t, at);
     }
@@ -241,6 +261,51 @@ int flecs_type_new_without(
     if (remain) {
         ecs_os_memcpy_n(
             &dst_array[at], &src_array[at + count], ecs_id_t, remain);
+    }
+
+    return 0;
+}
+
+/* Create type from source type without entity id, ignoring generation */
+static
+int flecs_type_new_without_ignoring_generation(
+    ecs_world_t *world,
+    ecs_type_t *dst,
+    const ecs_type_t *src,
+    ecs_id_t without)
+{
+    ecs_assert(!ecs_id_is_wildcard(without), ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(!ECS_IS_PAIR(without), ECS_INVALID_PARAMETER, NULL);
+
+    ecs_id_t *src_array = src->array;
+    int32_t at = flecs_type_find_ignoring_generation(src, without);
+    if (at == -1) {
+        return -1;
+    }
+
+    int32_t src_count = src->count;
+    if (src_count == 1) {
+        dst->array = NULL;
+        dst->count = 0;
+        return 0;
+    }
+
+    int32_t dst_count = src_count - 1;
+    ecs_id_t *dst_array = flecs_walloc_n(world, ecs_id_t, dst_count);
+    dst->array = dst_array;
+    dst->count = dst_count;
+
+    ecs_assert(dst_array != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(src_array != NULL, ECS_INTERNAL_ERROR, NULL);
+
+    if (at) {
+        ecs_os_memcpy_n(dst_array, src_array, ecs_id_t, at);
+    }
+
+    int32_t remain = dst_count - at;
+    if (remain) {
+        ecs_os_memcpy_n(
+            &dst_array[at], &src_array[at + 1], ecs_id_t, remain);
     }
 
     return 0;
@@ -298,6 +363,22 @@ void flecs_type_remove(
 {
     ecs_type_t new_type;
     int res = flecs_type_new_without(world, &new_type, type, remove);
+    if (res != -1) {
+        flecs_type_free(world, type);
+        type->array = new_type.array;
+        type->count = new_type.count;
+    }
+}
+
+/* Remove from type while ignoring entity id generation */
+void flecs_type_remove_ignoring_generation(
+    ecs_world_t *world,
+    ecs_type_t *type,
+    ecs_id_t remove)
+{
+    ecs_type_t new_type;
+    int res = flecs_type_new_without_ignoring_generation(
+        world, &new_type, type, remove);
     if (res != -1) {
         flecs_type_free(world, type);
         type->array = new_type.array;
@@ -794,7 +875,7 @@ void flecs_compute_table_diff(
         !ecs_id_is_wildcard(id) && !(added_flags|removed_flags);
 
     if (trivial_edge) {
-        /* If edge is trivial there's no need to create a diff element for it */
+        /* If edge is trivial, there's no need to create a diff element for it */
         return;
     }
 
@@ -872,7 +953,7 @@ void flecs_add_overrides_for_base(
                     to_add = 0;
 
                     /* Add flag to base table. Cheaper to do here vs adding an
-                     * observer for OnAdd AUTO_OVERRIDE|* / during table 
+                     * observer for (OnAdd, AUTO_OVERRIDE|*) during table
                      * creation. */
                     base_table->flags |= EcsTableOverrideDontFragment;
                 }
@@ -898,8 +979,6 @@ void flecs_add_overrides_for_base(
                     int32_t column = flecs_type_find(dst_type, wc);
                     if (column == -1) {
                         flecs_type_add(world, dst_type, to_add);
-                    } else {
-                        dst_type->array[column] = to_add;
                     }
                 }
             }
@@ -1015,6 +1094,19 @@ ecs_table_t* flecs_find_table_with(
         flecs_add_with_property(world, cr_with_wildcard, &dst_type, r, o);
     }
 
+    if (with == ecs_id(EcsParent)) {
+        if (node->flags & EcsTableHasChildOf) {
+            flecs_type_remove(world, &dst_type, 
+                ecs_pair(EcsChildOf, EcsWildcard));
+        }
+    } else if (ECS_PAIR_FIRST(with) == EcsChildOf) {
+        if (node->flags & EcsTableHasParent) {
+            flecs_type_remove(world, &dst_type, ecs_id(EcsParent));
+            flecs_type_remove(world, &dst_type, 
+                ecs_pair(EcsParentDepth, EcsWildcard));
+        }
+    }
+
     return flecs_table_ensure(world, &dst_type, true, node);
 }
 
@@ -1050,6 +1142,11 @@ ecs_table_t* flecs_find_table_without(
     int res = flecs_type_new_without(world, &dst_type, &node->type, without);
     if (res == -1) {
         return node; /* Current table does not have id */
+    }
+
+    if (without == ecs_id(EcsParent)) {
+        flecs_type_remove(world, &dst_type, 
+            ecs_pair(EcsParentDepth, EcsWildcard));
     }
 
     return flecs_table_ensure(world, &dst_type, true, node);

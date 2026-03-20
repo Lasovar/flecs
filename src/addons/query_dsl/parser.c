@@ -1,6 +1,6 @@
 /**
- * @file addons/script/query_parser.c
- * @brief Script grammar parser.
+ * @file addons/query_dsl/parser.c
+ * @brief Query DSL parser.
  */
 
 #include "flecs.h"
@@ -173,6 +173,23 @@ const char* flecs_term_parse_arg(
         // Position(src
         //          ^
         Parse(
+            case '@': {
+                parser->term->id = ECS_VALUE_PAIR;
+                Parse(
+                    case '*':
+                        ref->id = EcsWildcard;
+                        break;
+                    case EcsTokIdentifier:
+                        ref->name = Token(1);
+                        break;
+                    case EcsTokNumber: {
+                        char *end;
+                        ref->id = strtoul(Token(1), &end, 10);
+                        break;
+                    }
+                );
+                break;
+            }
             case EcsTokTermIdentifier: {
                 ref->name = Token(0);
 
@@ -629,7 +646,7 @@ const char* flecs_term_parse(
     ecs_term_t *term)
 {
     ecs_assert(world != NULL, ECS_INVALID_PARAMETER, NULL);
-    ecs_assert(expr != NULL, ECS_INVALID_PARAMETER, name);
+    ecs_assert(expr != NULL, ECS_INVALID_PARAMETER, "%s", name);
     ecs_assert(term != NULL, ECS_INVALID_PARAMETER, NULL);
 
     ecs_parser_t parser = {
@@ -658,7 +675,7 @@ const char* flecs_id_parse(
     ecs_id_t *id)
 {
     ecs_assert(world != NULL, ECS_INVALID_PARAMETER, NULL);
-    ecs_assert(expr != NULL, ECS_INVALID_PARAMETER, name);
+    ecs_assert(expr != NULL, ECS_INVALID_PARAMETER, "%s", name);
     ecs_assert(id != NULL, ECS_INVALID_PARAMETER, NULL);
 
     char token_buffer[256];

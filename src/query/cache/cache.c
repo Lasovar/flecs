@@ -2,7 +2,7 @@
  * @file query/cache/cache.c
  * @brief Cached query implementation.
  * 
- * Implements a cache that stores a list of tables that matches the query. 
+ * Implements a cache that stores a list of tables that match the query. 
  * Cached queries outperform uncached queries in many scenarios since they don't
  * have to search for tables that match a query, but just iterate a list.
  * 
@@ -41,7 +41,7 @@
  *                            single group by default, but can have more (see 
  *                            group_by).
  * 
- * There are three cache features that significantly alter the way how elements
+ * There are three cache features that significantly alter how elements
  * are stored in the cache, which are group_by, order_by and wildcards.
  * 
  * Group_by
@@ -95,11 +95,12 @@
  * used for sorting is qsort.
  * 
  * Resorting is a very expensive operation. Queries use change detection, which
- * at a table level can detect if any changes occurred to the entities or ordered
- * by component. Only if a change has been detected will resorting occur. Even
+ * at a table level can detect if any changes occurred to the entities or the
+ * ordered-by component. Only if a change has been detected will resorting
+ * occur. Even
  * then, this remains an expensive feature and should only be used for data that
  * doesn't change often. Flecs uses the query sorting feature to ensure that
- * pipeline queries return systems in a well defined order.
+ * pipeline queries return systems in a well-defined order.
  * 
  * The sorted list of slices is stored in the table_slices member of the cache,
  * and is only populated for sorted queries.
@@ -163,7 +164,11 @@ uint64_t flecs_query_cache_default_group_by(
 
     ecs_id_t match;
     if (ecs_search(world, table, ecs_pair(id, EcsWildcard), &match) != -1) {
-        return ecs_pair_second(world, match);
+        if (ECS_IS_VALUE_PAIR(match)) {
+            return ECS_PAIR_SECOND(match);
+        } else {
+            return ecs_pair_second(world, match);
+        }
     }
     return 0;
 }
@@ -403,13 +408,13 @@ error:
     return;
 }
 
-/* Callback for the observer that is subscribed for table events. This function
+/* Callback for the observer that is subscribed to table events. This function
  * is the entry point for matching/unmatching new tables with the query. */
 static
 void flecs_query_cache_on_event(
     ecs_iter_t *it)
 {
-    /* Because this is the observer::run callback, checking if this is event is
+    /* Because this is the observer::run callback, checking if this event is
      * already handled is not done for us. */
     ecs_world_t *world = it->world;
     ecs_observer_t *o = it->ctx;
@@ -608,7 +613,7 @@ ecs_query_cache_t* flecs_query_cache_init(
 
     /* Set flag for trivial caches which allows for faster iteration */
     if (impl->pub.flags & EcsQueryIsCacheable) {
-        /* Trivial caches may only contain And/Not operators. */
+        /* Trivial caches may only contain And/Not/Optional operators. */
         int32_t t, count = q->term_count;
         for (t = 0; t < count; t ++) {
             if (q->terms[t].oper != EcsAnd && q->terms[t].oper != EcsNot && q->terms[t].oper != EcsOptional) {
@@ -617,13 +622,15 @@ ecs_query_cache_t* flecs_query_cache_init(
         }
 
         if ((t == count) && (q->flags & EcsQueryMatchOnlySelf) &&
-           !(q->flags & EcsQueryMatchWildcards))
+           !(q->flags & EcsQueryMatchWildcards) &&
+           !(q->flags & EcsQueryCacheWithFilter))
         {
             if (!const_desc->order_by && !const_desc->group_by && 
                 !const_desc->order_by_callback && 
                 !const_desc->group_by_callback &&
                 !(const_desc->flags & EcsQueryDetectChanges))
             {
+                
                 q->flags |= EcsQueryTrivialCache;
             }
         }
@@ -632,6 +639,7 @@ ecs_query_cache_t* flecs_query_cache_init(
     if (const_desc->flags & EcsQueryDetectChanges) {
         for (int i = 0; i < q->term_count; i ++) {
             ecs_term_t *term = &q->terms[i];
+
             /* If query has change detection, flag this on the component record. 
              * This allows code to skip calling modified() if there are no OnSet
              * hooks/observers, and the component isn't used in any queries that use
@@ -673,7 +681,7 @@ ecs_query_cache_t* flecs_query_cache_init(
 
     flecs_query_cache_allocators_init(result);
 
-    /* Zero'd out sources array that's used for results that only match $this. 
+    /* Zeroed-out sources array that's used for results that only match $this. 
      * This reduces the amount of memory used by the cache, and improves CPU
      * cache locality during iteration when doing source checks. */
     if (result->query->term_count) {
@@ -694,6 +702,7 @@ ecs_query_cache_t* flecs_query_cache_init(
         ecs_os_memcpy_n(observer_desc.query.terms, q->terms, 
             ecs_term_t, q->term_count);
         observer_desc.query.expr = NULL; /* Already parsed */
+        observer_desc.query.flags |= EcsQueryTableOnly;
 
         result->observer = flecs_observer_init(world, entity, &observer_desc);
         if (!result->observer) {

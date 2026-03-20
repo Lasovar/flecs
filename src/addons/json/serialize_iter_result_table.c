@@ -187,9 +187,6 @@ bool flecs_json_serialize_table_pairs(
             flecs_json_object_push(buf);            
         }
 
-        ecs_entity_t second = flecs_entities_get_alive(
-            world, ECS_PAIR_SECOND(id));
-
         bool is_last = f == (type_count - 1);
         bool is_same = !is_last && 
             (ECS_PAIR_FIRST(ids[f + 1]) == ECS_PAIR_FIRST(id));
@@ -217,8 +214,18 @@ bool flecs_json_serialize_table_pairs(
             flecs_json_next(buf);
         }
 
-        flecs_json_path_or_label(buf, world, second, 
-            desc ? desc->serialize_full_paths : true);
+        if (ECS_IS_VALUE_PAIR(id)) {
+            ecs_strbuf_appendch(buf, '\"');
+            ecs_strbuf_appendch(buf, '@');
+            ecs_strbuf_appendint(buf, ECS_PAIR_SECOND(id));
+            ecs_strbuf_appendch(buf, '\"');
+        } else {
+            ecs_entity_t second = flecs_entities_get_alive(
+                world, ECS_PAIR_SECOND(id));
+
+            flecs_json_path_or_label(buf, world, second, 
+                desc ? desc->serialize_full_paths : true);
+        }
 
         pair_count ++;
     }
@@ -470,6 +477,7 @@ int flecs_json_serialize_iter_result_table(
     const ecs_iter_t *it, 
     ecs_strbuf_t *buf,
     const ecs_iter_to_json_desc_t *desc,
+    ecs_json_ser_ctx_t *ser_ctx,
     int32_t count,
     bool has_this,
     const char *parent_path,
@@ -504,13 +512,16 @@ int flecs_json_serialize_iter_result_table(
     int32_t i, end = it->offset + count;
     int result = 0;
     for (i = it->offset; i < end; i ++) {
-        flecs_json_next(buf);
-        flecs_json_object_push(buf);
-
         if (has_this) {
             ecs_json_this_data_t this_data_cpy = *this_data;
-            flecs_json_serialize_iter_this(
-                it, parent_path, &this_data_cpy, i - it->offset, buf, desc);
+            if (!flecs_json_serialize_iter_this(it, parent_path, 
+                &this_data_cpy, i - it->offset, buf, desc, ser_ctx)) 
+            {
+                continue;
+            }
+        } else {
+            flecs_json_next(buf);
+            flecs_json_object_push(buf);
         }
 
         if (tags_pairs_vars) {

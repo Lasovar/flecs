@@ -11,8 +11,6 @@ Some of the features of Flecs Script are:
 - Conditionals and loops (`if var > 10`, `for i in [0..10]`)
 - Native integration with templates (procedural assets)
 
-To learn Flecs Script, check out the [Tutorial](FlecsScriptTutorial.md)!
-
 ## Example
 
 ```cpp
@@ -95,6 +93,15 @@ String names can be combined with string interpolation (see below) to create nam
 
 ```cpp
 "USS_$name" {}
+```
+
+By default children are created using the `ChildOf` hierarchy storage. To select the `Parent` hierarchy storage, add the `tree` annotation:
+
+```cpp
+@tree Parent
+my_parent {
+  my_child {}
+}
 ```
 
 ### Tags
@@ -700,6 +707,46 @@ bool implicit_cast_allowed(from, to) {
 
 If either the expressiveness or storage scores are negative, the operand types are not implicitly castable.
 
+#### Vector operations
+If the left operand of a binary expression is of a vector type, the operation will be executed for each of its operands. A vector type is a type that meets the following criteria: 
+
+- The type must be a primitive or struct type.
+- If the type is a struct type:
+  - All members must be of the same type.
+  - The member type must be primitive.
+
+For example:
+
+```cpp
+// Valid vector type: all members are of the same primitive type
+struct Position {
+  float x;
+  float y;
+  float z;
+};
+
+// Not a valid vector type: members are not of a primitive type
+struct Line {
+  Position start;
+  Position stop;
+};
+
+// Not a valid vector type: not all members are of the same type
+struct Rgba {
+  int8_t r;
+  int8_t g;
+  int8_t b;
+  float a;
+};
+```
+
+An example of a vector operation:
+
+```cpp
+const p0 = Position: {10, 20, 30}
+const p1 = p0 + 1 // {11, 21, 31}
+```
+
 #### Lvalues
 Lvalues are the left side of assignments. There are two kinds of assignments possible in Flecs script:
 - Variable initialization
@@ -750,6 +797,21 @@ ecs_function(world, {
 });
 ```
 
+Function implementations looks like this:
+
+```cpp
+void sum(
+    const ecs_function_ctx_t *ctx,
+    int32_t argc,
+    const ecs_value_t *argv,
+    ecs_value_t *result)
+{
+    int64_t *a = argv[0].ptr;
+    int64_t *b = argv[1].ptr;
+    *(int64_t*)result->ptr = *a + *b;
+}
+```
+
 ### Methods
 Methods are functions that are called on instances of the method's type. The first argument of a method is the instance on which the method is called. The following snippet shows examples of method calls:
 
@@ -774,39 +836,98 @@ ecs_method(world, {
 });
 ```
 
+### Vector functions
+Vector functions are functions that accept arguments of a builtin `ScriptVectorType` type. This allows these functions to accept any type that is a valid vector type (see Vector operations).
+
+Here is a usage example of a vector function:
+
+```cpp
+const red = Rgb: {255, 0, 0}
+const blue = Rgb: {0, 0, 255}
+const purple: lerp(red, blue, 0.5)
+```
+
+When a vector function is called, all of the arguments provided to parameters of `ScriptVectorType` must be of the same type. The following code is therefore not valid:
+
+```cpp
+const red = Rgb: {255, 0, 0}
+const p = Position: {10, 20, 30}
+const red_p: lerp(red, p, 0.5) // Illegal: red and p are of different types
+```
+
+Vector functions are registered like normal functions, but instead of specifying a `callback`, the application sets `vector_callbacks`. An example:
+
+```cpp
+ecs_function(world, {
+    .name = "lerp",
+    .return_type = EcsScriptVectorType,
+    .params = {
+        { "a", EcsScriptVectorType },
+        { "b", EcsScriptVectorType },
+        { "t", ecs_id(ecs_f64_t) },
+    },
+    .vector_callbacks = {
+        [EcsF32] = lerp_f32,
+        [EcsF64] = lerp_f64
+    }
+});
+```
+
+The signature for vector functions accepts an additional argument for the number of elements in the vector type:
+
+```cpp
+void lerp_f32(
+    const ecs_function_ctx_t *ctx,
+    int32_t argc,
+    const ecs_value_t *argv,
+    ecs_value_t *result,
+    int32_t elem_count)
+{
+    float *a = argv[0].ptr;
+    float *b = argv[1].ptr;
+    double t = *(double*)argv[2].ptr;
+    float *r = result->ptr;
+    for (int i = 0; i < elem_count; i ++) {
+        r[i] = a[i] + t * (b[i] - a[i]);
+    }
+}
+```
+
+In the function documentation below the type of vector parameters is written as `[]`.
+
 ### Builtin functions and constants
 The following table lists builtin core functions in the `flecs.script.core` namespace:
 
-| **Function Name** | **Description**             | **Return Type** | **Arguments**               |
-|-------------------|-----------------------------|-----------------|-----------------------------|
-| `pair`            | Returns a pair identifier   | `id`            | (`entity`, `entity`)        |
+| **Function Name** | **Description**                          | **Return Type**  | **Arguments**        |
+|-------------------|------------------------------------------|------------------|----------------------|
+| `pair`            | Returns a pair identifier                | `id`             | (`entity`, `entity`) |
 
 The following table lists builtin methods on the `flecs.meta.entity` type:
 
-| **Method Name**   | **Description**                        | **Return Type** | **Arguments**        |
-|-------------------|----------------------------------------|-----------------|----------------------|
-| `name`            | Returns entity name                    | `string`        | `()`                 |
-| `path`            | Returns entity path                    | `string`        | `()`                 |
-| `parent`          | Returns entity parent                  | `entity`        | `()`                 |
-| `has`             | Returns whether entity has component   | `bool`          | `(id)`               |
+| **Method Name**   | **Description**                          | **Return Type**  | **Arguments**     |
+|-------------------|------------------------------------------|------------------|-------------------|
+| `name`            | Returns entity name                      | `string`         | `()`              |
+| `path`            | Returns entity path                      | `string`         | `()`              |
+| `parent`          | Returns entity parent                    | `entity`         | `()`              |
+| `has`             | Returns whether entity has component     | `bool`           | `(id)`            |
 
 The following table lists doc methods on the `flecs.meta.entity` type:
 
-| **Method Name**  | **Description**                           | **Return Type**  | **Arguments**        |
-|-------------------|------------------------------------------|------------------|----------------------|
-| `doc_name`        | Returns entity doc name                  | `string`         | `()`                 |
-| `doc_uuid`        | Returns entity doc uuid                  | `string`         | `()`                 |
-| `doc_brief`       | Returns entity doc brief description     | `string`         | `()`                 |
-| `doc_detail`      | Returns entity doc detailed description  | `string`         | `()`                 |
-| `doc_link`        | Returns entity doc link                  | `string`         | `()`                 |
-| `doc_color`       | Returns entity doc color                 | `string`         | `()`                 |
+| **Method Name**  | **Description**                           | **Return Type**  | **Arguments**     |
+|-------------------|------------------------------------------|------------------|-------------------|
+| `doc_name`        | Returns entity doc name                  | `string`         | `()`              |
+| `doc_uuid`        | Returns entity doc uuid                  | `string`         | `()`              |
+| `doc_brief`       | Returns entity doc brief description     | `string`         | `()`              |
+| `doc_detail`      | Returns entity doc detailed description  | `string`         | `()`              |
+| `doc_link`        | Returns entity doc link                  | `string`         | `()`              |
+| `doc_color`       | Returns entity doc color                 | `string`         | `()`              |
 
 To use the doc functions, make sure to use a Flecs build compiled with `FLECS_DOC` (enabled by default).
 
 The following table lists math functions in the `flecs.script.math` namespace:
 
 | **Function Name** | **Description**                          | **Return Type** | **Arguments**       |
-|--------------------|-----------------------------------------|-----------------|---------------------|
+|-------------------|------------------------------------------|-----------------|---------------------|
 | `cos`             | Compute cosine                           | `f64`           | `(f64)`             |
 | `sin`             | Compute sine                             | `f64`           | `(f64)`             |
 | `tan`             | Compute tangent                          | `f64`           | `(f64)`             |
@@ -833,13 +954,23 @@ The following table lists math functions in the `flecs.script.math` namespace:
 | `floor`           | Round down value                         | `f64`           | `(f64)`             |
 | `round`           | Round to nearest                         | `f64`           | `(f64)`             |
 | `abs`             | Compute absolute value                   | `f64`           | `(f64)`             |
+| `min`             | Return smallest of two values            | `f64`           | `(f64, f64)`        |
+| `max`             | Return largest of two values             | `f64`           | `(f64, f64)`        |
+| `clamp`           | Clamp value between minimum/maximum      | `[]`            | `([] v, [] min, f64 max)` |
+| `lerp`            | Interpolate between two values           | `[]`            | `([] a, [] b, f64 t)` |
+| `smoothstep`      | Smooth interpolation between two values  | `[]`            | `([] a, [] b, f64 t)` |
+| `dot`             | Return dot product for two vectors       | `f64`           | `([] a, [] b)`      |
+| `length`          | Return length of vector                  | `f64`           | `([] v)`            |
+| `length_sq`       | Return squared length of vector          | `f64`           | `([] v)`            |
+| `normalize`       | Normalize vector                         | `[]`            | `([] v)`            |
+| `perlin2`         | 2D perlin noise function                 | `f64`           | `(f64 x, f64 y)`    |
 
 The following table lists the constants in the `flecs.script.math` namespace:
 
-| **Function Name** | **Description**                           | **Type** | **Value**            |
-|-------------------|-------------------------------------------|----------|----------------------|
-| `E`               | Euler's number                            | `f64`    | `2.71828182845904523536028747135266250` |
-| `PI`              | Ratio of circle circumference to diameter | `f64`    | `3.14159265358979323846264338327950288` |
+| **Function Name** | **Description**                           | **Type**       | **Value**            |
+|-------------------|-------------------------------------------|----------------|----------------------|
+| `E`               | Euler's number                            | `f64`          | `2.71828182845904523536028747135266250` |
+| `PI`              | Ratio of circle circumference to diameter | `f64`          | `3.14159265358979323846264338327950288` |
 
 The following table lists methods of the `flecs.script.math.Rng` type:
 
@@ -953,9 +1084,7 @@ template Forest {
 Forest my_forest
 ```
 
-## Advanced Features
-
-### Module statement
+## Module statement
 The `module` statement puts all contents of a script in a module. Example:
 
 ```cpp
@@ -970,7 +1099,7 @@ struct Position {
 
 The `components.transform` entity will be created with the `Module` tag.
 
-### Using statement
+## Using statement
 The `using` keyword imports a namespace into the current namespace. Example:
 
 ```cpp
@@ -1018,7 +1147,7 @@ struct Position {
 }
 ```
 
-### With statement
+## With statement
 When you're building a scene or asset you may find yourself often repeating the same components for multiple entities. To avoid this, a `with` statement can be used. For example:
 
 ```cpp
@@ -1071,7 +1200,7 @@ with Color(38, 25, 13) {
 }
 ```
 
-### Variables
+## Variables
 Scripts can contain variables, which are useful for often repeated values. Variables are created with the `const` keyword. Example:
 
 ```cpp
@@ -1210,7 +1339,7 @@ world.import<math>();
 double pi_2 = math::pi * 2;
 ```
 
-### Component values
+## Component values
 A script can use the value of a component that is looked up on a specific entity. The following example fetches the `width` and `depth` members from the `Level` component, that is fetched from the `Game` entity:
 
 ```cpp
@@ -1231,7 +1360,7 @@ tiles {
 
 The requested component is stored by value, not by reference. Adding or removing components to the entity will not invalidate the component data. If the requested component does not exist on the entity, script execution will fail.
 
-### If statement
+## If statement
 Parts of a script can be conditionally executed with an if statement. Example:
 
 ```cpp
@@ -1264,7 +1393,7 @@ traffic_light {
 }
 ```
 
-### For statement
+## For statement
 Parts of a script can be repeated with a for loop. Example:
 
 ```cpp
@@ -1310,7 +1439,7 @@ for i in 0..10 {
 }
 ```
 
-### Default components
+## Default components
 A scope can have a default component, which means entities in that scope can assign values of that component without having to specify the component name. 
 
 There are different ways to specify a default component. One way is to use a `with` statement. Default component values are assigned with the `=` operator, and don't need a `{}` surrounding the value. Example:
@@ -1382,7 +1511,7 @@ struct Line {
 }
 ```
 
-### Semicolon operator
+## Semicolon operator
 Multiple statements can be combined on a single line when using the semicolon operator. Example:
 
 ```cpp
@@ -1391,7 +1520,7 @@ my_spaceship {
 }
 ```
 
-### Comma operator
+## Comma operator
 The comma operator can be used as a shortcut to create multiple entities in a scope. Example:
 
 ```cpp

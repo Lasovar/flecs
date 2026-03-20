@@ -61,10 +61,7 @@ next:
     op_ctx->cur ++;
 
     if (op_ctx->cur == end) {
-        if (op->flags & (EcsQueryIsVar << EcsQuerySrc)) {
-            flecs_query_var_narrow_range(op->src.var, op_ctx->range.table, 
-                op_ctx->range.offset, op_ctx->range.count, ctx);
-        }
+        flecs_query_src_set_range(op, &op_ctx->range, ctx);
         return false;
     }
 
@@ -87,10 +84,7 @@ next:
         goto next;
     }
 
-    if (op->flags & (EcsQueryIsVar << EcsQuerySrc)) {
-        flecs_query_var_narrow_range(op->src.var, op_ctx->range.table, 
-            op_ctx->cur, 1, ctx);
-    }
+    flecs_query_src_set_single(op, op_ctx->cur, ctx);
 
     return true;
 }
@@ -124,7 +118,7 @@ next:
         ECS_INVALID_OPERATION, "sparse iterator invalidated while iterating");
 
     ecs_entity_t e = flecs_sparse_ids(op_ctx->sparse)[op_ctx->cur];
-    ecs_table_range_t range = flecs_range_from_entity(e, ctx);
+    ecs_table_range_t range = flecs_range_from_entity(ctx->world, e);
 
     if (flecs_query_table_filter(range.table, op->other, table_mask)) {
         goto next;
@@ -305,18 +299,29 @@ bool flecs_query_sparse_with_id(
     if (!redo) {
         ecs_component_record_t *cr = flecs_components_get(ctx->world, id);
         if (!cr) {
-            return false;
+            goto no_sparse;
         }
 
-        op_ctx->sparse = cr->sparse;
-        if (!op_ctx->sparse) {
-            return false;
+        ecs_sparse_t *sparse = cr->sparse;
+        if (!sparse || !flecs_sparse_count(sparse)) {
+            goto no_sparse;
         }
 
+        op_ctx->sparse = sparse;
         flecs_query_sparse_init_range(op, ctx, op_ctx);
+    } else {
+        if (!op_ctx->range.table) {
+            return false;
+        }
     }
 
     return flecs_query_sparse_next_entity(op, ctx, op_ctx, not, ptr_out);
+no_sparse:
+    op_ctx->sparse = NULL;
+    op_ctx->range.table = NULL;
+    op_ctx->range.offset = 0;
+    op_ctx->range.count = 0;
+    return not;
 }
 
 static
@@ -369,7 +374,8 @@ bool flecs_query_sparse_with_wildcard(
     if (!redo) {
         ecs_component_record_t *cr = flecs_components_get(ctx->world, id);
         if (!cr) {
-            return false;
+            op_ctx->cr = NULL;
+            return not;
         }
 
         if (cr->flags & EcsIdExclusive) {
@@ -396,6 +402,9 @@ bool flecs_query_sparse_with_wildcard(
     } else {
         if (op_ctx->exclusive) {
             return flecs_query_sparse_with_exclusive(op, true, ctx, not, id);
+        }
+        if (!op_ctx->cr) {
+            return false;
         }
         with_redo = true;
         goto next_select;

@@ -30,18 +30,19 @@ void flecs_query_update_node_up_trs(
             }
 
             ecs_entity_t src = node->_sources[f];
-            if (src) {
+            if (src && src != EcsWildcard) {
                 ecs_record_t *r = flecs_entities_get(ctx->world, src);
                 ecs_assert(r != NULL, ECS_INTERNAL_ERROR, NULL);
                 ecs_assert(r->table != NULL, ECS_INTERNAL_ERROR, NULL);
                 if (r->table != node->_tables[f]) {
+                    node->_tables[f] = r->table;
+
                     ecs_component_record_t *cr = flecs_components_get(
                         ctx->world, q->ids[f]);
                     const ecs_table_record_t *tr = node->base.trs[f] = 
                         flecs_component_get_table(cr, r->table);
-                    ecs_assert(tr != NULL, ECS_INTERNAL_ERROR, NULL);
-                    ctx->it->trs[field_map ? field_map[f] : f] = tr;
-                    node->_tables[f] = r->table;
+
+                    ctx->it->trs[field_map ? field_map[f] : f] = tr;                    
                 }
             }
         }
@@ -90,7 +91,7 @@ ecs_query_cache_match_t* flecs_query_cache_next(
         if (qit->cur >= ecs_vec_count(qit->tables)) {
             /* We're iterating the table vector of the group */
             if (qit->tables == qit->all_tables) {   
-                /* If a group is set, we might have to iterate multiple */
+                /* If a group is set, we might have to iterate multiple groups */
                 ecs_query_cache_group_t *group = qit->group;
                 if (!group || qit->iter_single_group) {
                     return NULL;
@@ -154,53 +155,6 @@ ecs_query_cache_match_t* flecs_query_cache_next(
     }
 }
 
-/* Update cached pointers. Cached queries store the column pointers of a matched
- * table which improves cache locality of fetching component pointers while
- * iterating a cache as it avoids having to go through a table record.
- * Component pointers only need to be updated when a table column got 
- * reallocated, in which case the table_column_version will have increased. */
-static
-void flecs_query_cache_update_ptrs(
-    ecs_iter_t *it,
-    ecs_query_triv_cache_match_t *qm,
-    ecs_table_t *table)
-{
-    ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
-
-    it->ptrs = qm->ptrs;
-
-    uint32_t version = flecs_get_table_column_version(
-        it->real_world, table->id);
-    if (qm->table_version == version) {
-        /* This is the most common case, as table columns pointers only change
-         * when the table grows in size. */
-        return;
-    }
-
-    qm->table_version = version;
-
-    /* Update the pointers. This can be done safely from multiple threads since
-     * all the read data is immutable, and thus each thread will arrive at the
-     * same result. */
-    int32_t i, field_count = it->field_count;
-    for (i = 0; i < field_count; i ++) {
-        qm->ptrs[i] = NULL;
-
-        const ecs_table_record_t *tr = qm->trs[i];
-        if (!tr || tr->column == -1) {
-            /* Field is not set or is not a component. */
-            continue;
-        }
-
-        if (it->sources[i]) {
-            /* Field is not matched on table */
-            continue;
-        }
-
-        qm->ptrs[i] = table->data.columns[tr->column].data;
-    }
-}
-
 /* Find next match in trivial cache. A trivial cache doesn't have to handle
  * wildcards, multiple groups or fields matched through up traversal. */
 static
@@ -227,8 +181,6 @@ ecs_query_cache_match_t* flecs_query_trivial_cache_next(
                 goto repeat;
             }
         }
-
-        flecs_query_cache_update_ptrs(it, qm, table);
 
         it->entities = ecs_table_entities(table);
         it->trs = qm->trs;
@@ -334,6 +286,9 @@ bool flecs_query_is_cache_search(
         return false;
     }
 
+    ctx->vars[0].range.count = node->_count;
+    ctx->vars[0].range.offset = node->_offset;
+
     ecs_iter_t *it = ctx->it;
     it->trs = node->base.trs;
     it->ids = node->_ids;
@@ -341,9 +296,11 @@ bool flecs_query_is_cache_search(
     it->set_fields = node->base.set_fields;
     it->up_fields = node->_up_fields;
 
-    flecs_query_update_node_up_trs(ctx, node);
+#ifdef FLECS_DEBUG
+    it->flags |= EcsIterImmutableCacheData;
+#endif
 
-    flecs_query_cache_update_ptrs(it, &node->base, node->base.table);
+    flecs_query_update_node_up_trs(ctx, node);
 
     return true;
 }
@@ -389,6 +346,10 @@ bool flecs_query_is_cache_test(
     it->ids = node->_ids;
     it->sources = node->_sources;
     it->set_fields = node->base.set_fields;
+
+#ifdef FLECS_DEBUG
+    it->flags |= EcsIterImmutableCacheData;
+#endif
 
     flecs_query_update_node_up_trs(ctx, node);
 

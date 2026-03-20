@@ -3650,6 +3650,47 @@ void DontFragment_1_var_sparse_pair_exclusive_any_not(void) {
     ecs_fini(world);
 }
 
+void DontFragment_2_this_sparse_with_component_and_not(void) {
+    ecs_world_t *world = ecs_mini();
+
+    ECS_COMPONENT(world, Position);
+    ECS_TAG(world, Notified);
+    ecs_add_id(world, Notified, EcsDontFragment);
+
+    ecs_entity_t e1 = ecs_new(world);
+    ecs_entity_t e2 = ecs_new(world);
+    ecs_entity_t e3 = ecs_new(world);
+    ecs_set(world, e1, Position, {1});
+    ecs_set(world, e2, Position, {2});
+    ecs_set(world, e3, Position, {3});
+
+    ecs_query_t *q = ecs_query(world, {
+        .terms = {
+            { .id = ecs_id(Position) },
+            { .id = ecs_id(Notified), .oper = EcsNot },
+        }
+    });
+
+    ecs_iter_t it = ecs_query_iter(world, q);
+    test_bool(true, ecs_query_next(&it));
+    test_int(3, it.count);
+    test_uint(e1, it.entities[0]);
+    test_uint(e2, it.entities[1]);
+    test_uint(e3, it.entities[2]);
+    test_uint(0, ecs_field_src(&it, 0));
+    test_uint(0, ecs_field_src(&it, 1));
+    test_uint(ecs_id(Position), ecs_field_id(&it, 0));
+    test_uint(Notified, ecs_field_id(&it, 1));
+    test_bool(true, ecs_field_is_set(&it, 0));
+    test_bool(false, ecs_field_is_set(&it, 1));
+
+    test_bool(false, ecs_query_next(&it));
+
+    ecs_query_fini(q);
+
+    ecs_fini(world);
+}
+
 void DontFragment_1_sparse_component_unused(void) {
     ecs_world_t *world = ecs_mini();
 
@@ -6994,3 +7035,73 @@ void DontFragment_this_written_sparse_any_pair_recycled(void) {
 
     ecs_fini(world);
 }
+
+void DontFragment_this_written_not_sparse_wildcard_pair(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t Rel = ecs_entity(world, { .name = "Rel" });
+    ecs_add_id(world, Rel, EcsDontFragment);
+
+    ecs_entity_t Tag = ecs_entity(world, { .name = "Tag" });
+
+    ecs_entity_t e1 = ecs_entity(world, { .name = "e1" });
+    ecs_entity_t e2 = ecs_entity(world, { .name = "e2" });
+    ecs_add_id(world, e1, Tag);
+    ecs_add_id(world, e2, Tag);
+
+    ecs_query_t *q = ecs_query(world, {
+        .terms = {
+            { .id = Tag },
+            { .id = ecs_pair(Rel, EcsWildcard), .oper = EcsNot,
+              .inout = EcsInOutNone }
+        }
+    });
+
+    int32_t count = 0;
+    ecs_iter_t it = ecs_query_iter(world, q);
+    while (ecs_query_next(&it)) {
+        count += it.count;
+    }
+
+    test_int(count, 2);
+
+    ecs_query_fini(q);
+
+    ecs_fini(world);
+}
+
+void DontFragment_this_written_not_sparse_pair(void) {
+    ecs_world_t *world = ecs_init();
+
+    ecs_entity_t Rel = ecs_entity(world, { .name = "Rel" });
+    ecs_add_id(world, Rel, EcsDontFragment);
+
+    ecs_entity_t Tgt = ecs_entity(world, { .name = "Tgt" });
+    ecs_entity_t Tag = ecs_entity(world, { .name = "Tag" });
+
+    ecs_entity_t e1 = ecs_entity(world, { .name = "e1" });
+    ecs_entity_t e2 = ecs_entity(world, { .name = "e2" });
+    ecs_add_id(world, e1, Tag);
+    ecs_add_id(world, e2, Tag);
+
+    ecs_query_t *q = ecs_query(world, {
+        .terms = {
+            { .id = Tag },
+            { .id = ecs_pair(Rel, Tgt), .oper = EcsNot,
+              .inout = EcsInOutNone }
+        }
+    });
+
+    int32_t count = 0;
+    ecs_iter_t it = ecs_query_iter(world, q);
+    while (ecs_query_next(&it)) {
+        count += it.count;
+    }
+
+    test_int(count, 2);
+
+    ecs_query_fini(q);
+
+    ecs_fini(world);
+}
+

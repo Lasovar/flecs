@@ -1,6 +1,6 @@
 /**
- * @file addons/world_summary.c
- * @brief Monitor addon.
+ * @file addons/stats/world_summary.c
+ * @brief World summary addon.
  */
 
 #include "flecs.h"
@@ -155,12 +155,10 @@ void FlecsWorldSummaryImport(
     });
 
     ecs_observer(world, {
-        .entity = ecs_entity(world, { 
-            .name = "OnSetWorldSummary"
-        }),
         .events = { EcsOnSet },
         .query.terms = {{ .id = ecs_id(EcsWorldSummary) }},
-        .callback = OnSetWorldSummary
+        .callback = OnSetWorldSummary,
+        .global_observer = true
     });
 
     ecs_set(world, EcsWorld, EcsWorldSummary, {

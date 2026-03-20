@@ -1,6 +1,6 @@
 /**
- * @file addons/json/serialize_iter_rows.c
- * @brief Serialize (component) values to JSON strings.
+ * @file addons/json/serialize_iter_result.c
+ * @brief Serialize iterator result to JSON.
  */
 
 #include "json.h"
@@ -330,34 +330,87 @@ bool flecs_json_serialize_get_value_ctx(
     }
 }
 
-void flecs_json_serialize_iter_this(
+bool flecs_json_serialize_iter_this(
     const ecs_iter_t *it,
     const char *parent_path,
     const ecs_json_this_data_t *this_data,
     int32_t row,
     ecs_strbuf_t *buf,
-    const ecs_iter_to_json_desc_t *desc)
+    const ecs_iter_to_json_desc_t *desc,
+    ecs_json_ser_ctx_t *ser_ctx)
 {
     ecs_assert(row < it->count, ECS_INTERNAL_ERROR, NULL);
+    ecs_world_t *world = it->real_world;
+
+    ecs_assert(this_data != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_assert(this_data->ids != NULL, ECS_INTERNAL_ERROR, NULL);
+    ecs_entity_t e = this_data->ids[row];
+    ecs_assert(e != 0, ECS_INTERNAL_ERROR, NULL);
+
+    /* Skip entity if it already has been serialized */
+    if (!flecs_json_should_serialize(e, it, ser_ctx)) {
+        return false;
+    }
+
+    flecs_json_mark_serialized(e, ser_ctx);
+
+    /* Serialize parent first. Only necessary if this is a table with Parent
+     * component, as this will have been done at the table level for fragmenting
+     * relationships. */
+    ecs_entity_t parent = 0;
+    if (this_data->parents) {
+        parent = this_data->parents[row].value;
+        ecs_assert(parent != 0, ECS_INTERNAL_ERROR, NULL);
+        if (ecs_map_is_init(&ser_ctx->serialized)) {
+            flecs_entity_to_json_buf(world, parent, buf, desc, ser_ctx);
+        }
+    }
+
+    flecs_json_next(buf);
+    flecs_json_object_push(buf);
 
     if (parent_path) {
         flecs_json_memberl(buf, "parent");
         flecs_json_string(buf, parent_path);
+    } else if (parent) {        
+        flecs_json_memberl(buf, "parent");
+        char *path = ecs_get_path_w_sep(world, 0, parent, ".", "");
+        flecs_json_string(buf, path);
+        ecs_os_free(path);
     }
 
     flecs_json_memberl(buf, "name");
     if (this_data->names) {
-        flecs_json_string(buf, this_data->names[row].value);
+        if (this_data->table) {
+            ecs_assert(this_data->names[row].value != NULL, 
+                ECS_INTERNAL_ERROR, NULL);
+            flecs_json_string(buf, this_data->names[row].value);
+        }
     } else {
-        ecs_strbuf_appendlit(buf, "\"#");
-        ecs_strbuf_appendint(buf, flecs_uto(int64_t, 
-            (uint32_t)it->entities[row]));
-        ecs_strbuf_appendlit(buf, "\"");
+        bool name_set = false;
+        if (!this_data->table) {
+            const char *name = ecs_get_name(world, e);
+            if (name) {
+                flecs_json_string(buf, name);
+                name_set = true;
+            }
+        }
+
+        if (!name_set) {
+            ecs_strbuf_appendlit(buf, "\"#");
+            ecs_strbuf_appendint(buf, flecs_uto(int64_t, 
+                (uint32_t)it->entities[row]));
+            ecs_strbuf_appendlit(buf, "\"");
+        }
     }
 
     if (desc && desc->serialize_entity_ids) {
         flecs_json_memberl(buf, "id");
-        flecs_json_u32(buf, (uint32_t)this_data->ids[row]);
+        flecs_json_u32(buf, (uint32_t)e);
+        if (e != (uint32_t)e) {
+            flecs_json_memberl(buf, "version");
+            flecs_json_u32(buf, (uint32_t)(e >> 32));
+        }
     }
 
 #ifdef FLECS_DOC
@@ -370,6 +423,8 @@ void flecs_json_serialize_iter_this(
         } else {
             flecs_json_memberl(buf, "label");
             if (this_data->names) {
+                ecs_assert(this_data->names[row].value != NULL, 
+                    ECS_INTERNAL_ERROR, NULL);
                 flecs_json_string(buf, this_data->names[row].value);
             } else {
                 ecs_strbuf_appendlit(buf, "\"#");
@@ -407,6 +462,8 @@ void flecs_json_serialize_iter_this(
         flecs_json_memberl(buf, "has_alerts");
         flecs_json_true(buf);
     }
+
+    return true;
 }
 
 int flecs_json_serialize_iter_result(
@@ -417,7 +474,7 @@ int flecs_json_serialize_iter_result(
     ecs_json_ser_ctx_t *ser_ctx)
 {
     char *parent_path = NULL;
-    ecs_json_this_data_t this_data = {0};
+    ecs_json_this_data_t this_data = { .table = it->table };
 
     int32_t count = it->count;
     bool has_this = true;
@@ -427,6 +484,8 @@ int flecs_json_serialize_iter_result(
     } else {
         ecs_table_t *table = it->table;
         if (table) {
+            ecs_assert((it->offset + it->count) <= ecs_table_count(table), 
+                ECS_INTERNAL_ERROR, NULL);
             this_data.ids = &ecs_table_entities(table)[it->offset];
 
             /* Get path to parent once for entire table */
@@ -437,12 +496,34 @@ int flecs_json_serialize_iter_result(
                 ecs_entity_t parent = ecs_pair_second(
                     world, table->type.array[tr->index]);
                 parent_path = ecs_get_path_w_sep(world, 0, parent, ".", "");
+
+                /* If matching a query check if we need to serialize the parent
+                 * of the table before its children. Don't do this if query 
+                 * isn't set, as that means that we're serializing a single
+                 * entity. */
+                if (ecs_map_is_init(&ser_ctx->serialized)) {
+                    if (flecs_json_should_serialize(parent, it, ser_ctx)) {
+                        if (flecs_entity_to_json_buf(
+                            world, parent, buf, desc, ser_ctx)) 
+                        {
+                            return -1;
+                        }
+
+                        flecs_json_mark_serialized(parent, ser_ctx);
+                    }
+                }
             }
 
             /* Fetch name column once vs. calling ecs_get_name for each row */
             if (table->flags & EcsTableHasName) {
                 this_data.names = ecs_table_get_id(it->world, it->table, 
                     ecs_pair_t(EcsIdentifier, EcsName), it->offset);
+            }
+
+            /* Same for Parent column */
+            if (table->flags & EcsTableHasParent) {
+                this_data.parents = ecs_table_get_id(it->world, it->table,
+                    ecs_id(EcsParent), it->offset);
             }
 
             /* Get entity labels */
@@ -470,14 +551,13 @@ int flecs_json_serialize_iter_result(
         }
 #endif
         } else {
-            /* Very rare case, but could happen if someone's using an iterator
-             * to return empty entities. */
+            this_data.ids = it->entities;
         }
     }
 
     if (desc && desc->serialize_table) {
         if (flecs_json_serialize_iter_result_table(world, it, buf, 
-            desc, count, has_this, parent_path, &this_data))
+            desc, ser_ctx, count, has_this, parent_path, &this_data))
         {
             goto error;
         }

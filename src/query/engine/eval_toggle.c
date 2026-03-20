@@ -131,7 +131,7 @@ bool flecs_query_toggle_cmp(
     ecs_assert(table != NULL, ECS_INTERNAL_ERROR, NULL);
 
     if ((and_fields & op_ctx->prev_set_fields) != and_fields) {
-        /* If not all fields matching and toggles are set, table can't match */
+        /* If not all fields matching 'and' toggles are set, table can't match */
         return false;
     }
 
@@ -150,7 +150,7 @@ bool flecs_query_toggle_cmp(
 
     /* Shared fields are evaluated, can be ignored from now on */
     // and_fields &= ~up_fields;
-    not_fields &= ~up_fields;
+    not_fields &= flecs_uto(uint64_t, ~up_fields);
 
     if (!(table->flags & EcsTableHasToggle)) {
         if (not_fields) {
@@ -273,21 +273,18 @@ next_block:
         goto done;
     }
 
-    if (op->flags & (EcsQueryIsVar << EcsQuerySrc)) {
-        flecs_query_var_narrow_range(op->src.var, table, row, cur - row, ctx);
-    }
+    flecs_query_src_set_range(op, &(ecs_table_range_t){
+        .table = table, .offset = row, .count = cur - row
+    }, ctx);
     op_ctx->cur = cur;
 
     return true;
 
 done:
     /* Restore range & set fields */
-    if (op->flags & (EcsQueryIsVar << EcsQuerySrc)) {
-        flecs_query_var_narrow_range(op->src.var, 
-            table, op_ctx->range.offset, op_ctx->range.count, ctx);
-    }
-
+    flecs_query_src_set_range(op, &op_ctx->range, ctx);
     it->set_fields = op_ctx->prev_set_fields;
+
     return false;
 }
 

@@ -586,7 +586,7 @@ error:
     return -1;
 }
 
-/** Update id metric */
+/** Initialize id metric */
 static
 int flecs_id_metric_init(
     ecs_world_t *world,
@@ -617,7 +617,7 @@ error:
     return -1;
 }
 
-/** Update oneof metric */
+/** Initialize oneof metric */
 static
 int flecs_oneof_metric_init(
     ecs_world_t *world,
@@ -858,10 +858,6 @@ void FlecsMetricsImport(ecs_world_t *world) {
     ECS_COMPONENT_DEFINE(world, EcsMetricOneOf);
     ECS_COMPONENT_DEFINE(world, EcsMetricCountIds);
     ECS_COMPONENT_DEFINE(world, EcsMetricCountTargets);
-
-    ecs_add_id(world, ecs_id(EcsMetricMemberInstance), EcsPrivate);
-    ecs_add_id(world, ecs_id(EcsMetricIdInstance), EcsPrivate);
-    ecs_add_id(world, ecs_id(EcsMetricOneOfInstance), EcsPrivate);
 
     ecs_struct(world, {
         .entity = ecs_id(EcsMetricValue),

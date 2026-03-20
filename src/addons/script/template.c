@@ -53,10 +53,12 @@ void flecs_script_template_ctor(
 {
     ecs_world_t *world = ti->hooks.ctx;
     ecs_entity_t template_entity = ti->component;
+
+    /* Initialize object so copy hooks can safely overwrite members with dtors. */
+    flecs_default_ctor(ptr, count, ti);
     
     const EcsStruct *st = ecs_get(world, template_entity, EcsStruct);
     if (!st) {
-        ecs_os_memset(ptr, 0, count * ti->size);
         return;
     }
 
@@ -160,6 +162,7 @@ void flecs_script_template_instantiate(
     ecs_vec_t prev_using = v.r->using;
     ecs_vec_t prev_with = desc.runtime->with;
     ecs_vec_t prev_with_type_info = desc.runtime->with_type_info;
+
     v.r->using = template->using_;
     v.template_entity = template_entity;
     ecs_vec_init_t(NULL, &desc.runtime->with, ecs_value_t, 0);
@@ -178,12 +181,19 @@ void flecs_script_template_instantiate(
 
     v.entity = &instance_node;
 
-    int32_t i, m;
+    int32_t i, m, a;
     for (i = 0; i < count; i ++) {
         v.parent = entities[i];
         ecs_assert(ecs_is_alive(world, v.parent), ECS_INTERNAL_ERROR, NULL);
 
         instance_node.eval = entities[i];
+
+        /* Apply annotations, if any */
+        for (a = 0; a < ecs_vec_count(&template->annot); a ++) {
+            ecs_script_annot_t *annot = ecs_vec_get_t(
+                &template->annot, ecs_script_annot_t*, a)[0];
+            flecs_script_apply_annot(&v, &instance_node, annot);
+        }
 
         /* Create variables to hold template properties */
         ecs_script_vars_t *vars = flecs_script_vars_push(
@@ -367,9 +377,7 @@ int flecs_script_template_eval_prop(
         type = var->value.type = value.type;
         var->type_info = ti;
 
-        if (ti->hooks.ctor) {
-            ti->hooks.ctor(var->value.ptr, 1, ti);
-        }
+        flecs_type_info_ctor(var->value.ptr, 1, ti);
 
         ecs_value_copy_w_type_info(v->world, ti, var->value.ptr, value.ptr);
         ecs_value_fini_w_type_info(v->world, ti, value.ptr);
@@ -497,6 +505,8 @@ ecs_script_template_t* flecs_script_template_init(
     ecs_script_template_t *result = flecs_alloc_t(a, ecs_script_template_t);
     ecs_vec_init_t(NULL, &result->prop_defaults, ecs_script_var_t, 0);
     ecs_vec_init_t(NULL, &result->using_, ecs_entity_t, 0);
+    ecs_vec_init_t(NULL, &result->annot, ecs_script_annot_t*, 0);
+
     result->vars = ecs_script_vars_init(script->pub.world);
     return result;
 }
@@ -514,7 +524,7 @@ void flecs_script_template_fini(
         ecs_script_var_t *value = &values[i];
         const ecs_type_info_t *ti = value->type_info;
         if (ti->hooks.dtor) {
-            ti->hooks.dtor(value->value.ptr, 1, ti);
+            flecs_type_info_dtor(value->value.ptr, 1, ti);
         }
         flecs_free(a, ti->size, value->value.ptr);
     }
@@ -522,6 +532,7 @@ void flecs_script_template_fini(
     ecs_vec_fini_t(a, &template->prop_defaults, ecs_script_var_t);
 
     ecs_vec_fini_t(a, &template->using_, ecs_entity_t);
+    ecs_vec_fini_t(a, &template->annot, ecs_script_annot_t*);
     ecs_script_vars_fini(template->vars);
     flecs_free_t(a, ecs_script_template_t, template);
 }
@@ -563,6 +574,17 @@ int flecs_script_eval_template(
      * hooks for it. */
     if (!ecs_has(v->world, template_entity, EcsComponent)) {
         ecs_set(v->world, template_entity, EcsComponent, {1, 1});
+    }
+
+    /* Consume annotations, if any */
+    int32_t i, count = ecs_vec_count(&v->r->annot);
+    if (count) {
+        ecs_script_annot_t **annots = ecs_vec_first(&v->r->annot);
+        for (i = 0; i < count ; i ++) {
+            ecs_vec_append_t(&v->base.script->allocator, 
+                &template->annot, ecs_script_annot_t*)[0] = annots[i];
+        }
+        ecs_vec_clear(&v->r->annot);
     }
 
     template->type_info = ecs_get_type_info(v->world, template_entity);

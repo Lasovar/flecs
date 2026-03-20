@@ -1,6 +1,6 @@
  /**
- * @file queries/api.c
- * @brief User facing API for rules.
+ * @file query/api.c
+ * @brief User facing API for queries.
  */
 
 #include "../private_api.h"
@@ -105,7 +105,7 @@ int flecs_query_set_caching_policy(
              * such as group_by/order_by, also enable caching. */
             kind = EcsQueryCacheAuto;
         } else {
-            /* Be conservative in other scenario's, as caching adds significant
+            /* Be conservative in other scenarios, as caching adds significant
              * overhead to the cost of query creation which doesn't offset the
              * benefit of faster iteration if it's only used once. */
             kind = EcsQueryCacheNone;
@@ -140,7 +140,11 @@ int flecs_query_set_caching_policy(
         if (impl->pub.flags & EcsQueryIsCacheable) {
             /* If all terms of the query are cacheable, just set the policy to 
              * All which simplifies work for the compiler. */
-            impl->pub.cache_kind = EcsQueryCacheAll;
+            if (!(impl->pub.flags & EcsQueryCacheWithFilter)) {
+                impl->pub.cache_kind = EcsQueryCacheAll;
+            } else {
+                impl->pub.cache_kind = EcsQueryCacheAuto;
+            }
         } else if (!(impl->pub.flags & EcsQueryHasCacheable)) {
             /* Same for when the query has no cacheable terms */
             impl->pub.cache_kind = EcsQueryCacheNone;
@@ -239,7 +243,7 @@ int flecs_query_create_cache(
         ecs_assert(q->cache_kind == EcsQueryCacheNone, ECS_INTERNAL_ERROR, NULL);
 
         if (!(q->flags & EcsQueryNested)) {
-            /* If uncached query is not create to populate a cached query, it 
+            /* If uncached query is not created to populate a cached query, it
              * should not have cascade modifiers */
             int32_t i, count = q->term_count;
             ecs_term_t *terms = q->terms;
@@ -375,6 +379,8 @@ ecs_query_t* ecs_query_init(
     ecs_world_t *world, 
     const ecs_query_desc_t *const_desc)
 {
+    ecs_os_perf_trace_push("flecs.query_init");
+
     ecs_world_t *world_arg = world;
     ecs_stage_t *stage = flecs_stage_from_world(&world);
 
@@ -416,7 +422,7 @@ ecs_query_t* ecs_query_init(
         goto error;
     }
 
-    /* If query terms have itself as source, add term ids to self. This makes it
+    /* If query terms have the query itself as source, add term ids to it. This makes it
      * easy to attach components to queries, which is one of the ways
      * applications can attach data to systems. */
     flecs_query_add_self_ref(&result->pub);
@@ -446,15 +452,20 @@ ecs_query_t* ecs_query_init(
         flecs_poly_modified(world, entity, ecs_query_t);
     }
 
+    ecs_os_perf_trace_pop("flecs.query_init");
+
     return &result->pub;
 error:
     result->pub.entity = 0;
     ecs_query_fini(&result->pub);
+
+    ecs_os_perf_trace_pop("flecs.query_init");
+
     return NULL;
 }
 
 bool ecs_query_has(
-    ecs_query_t *q,
+    const ecs_query_t *q,
     ecs_entity_t entity,
     ecs_iter_t *it)
 {
@@ -469,7 +480,7 @@ error:
 }
 
 bool ecs_query_has_table(
-    ecs_query_t *q,
+    const ecs_query_t *q,
     ecs_table_t *table,
     ecs_iter_t *it)
 {
@@ -477,7 +488,8 @@ bool ecs_query_has_table(
     ecs_check(q->flags & EcsQueryMatchThis, ECS_INVALID_PARAMETER, NULL);
 
     if (!flecs_table_bloom_filter_test(table, q->bloom_filter)) {
-        q->eval_count ++;
+        /* Safe, only used for statistics */
+        ECS_CONST_CAST(ecs_query_t*, q)->eval_count ++;
         return false;
     }
 
@@ -489,7 +501,7 @@ error:
 }
 
 bool ecs_query_has_range(
-    ecs_query_t *q,
+    const ecs_query_t *q,
     ecs_table_range_t *range,
     ecs_iter_t *it)
 {
@@ -506,7 +518,8 @@ bool ecs_query_has_range(
     }
 
     if (!flecs_table_bloom_filter_test(table, q->bloom_filter)) {
-        q->eval_count ++;
+        /* Safe, only used for statistics */
+        ECS_CONST_CAST(ecs_query_t*, q)->eval_count ++;
         return false;
     }
 
@@ -659,4 +672,21 @@ void* ecs_query_get_group_ctx(
     } else {
         return info->ctx;
     }
+}
+
+const ecs_map_t* ecs_query_get_groups(
+    const ecs_query_t *query)
+{
+    flecs_poly_assert(query, ecs_query_t);
+    ecs_query_impl_t *q = flecs_query_impl(query);
+    ecs_check(q->cache != NULL, ECS_INVALID_PARAMETER, 
+        "ecs_query_get_groups is not valid for queries that don't use group_by");
+
+    ecs_query_cache_t *cache = q->cache;
+    ecs_check(cache->group_by != 0, ECS_INVALID_PARAMETER,
+        "ecs_query_get_groups is not valid for queries that don't use group_by");
+
+    return &cache->groups;
+error:
+    return NULL;
 }

@@ -1,5 +1,5 @@
 /**
- * @file addons/monitor.c
+ * @file addons/stats/monitor.c
  * @brief Stats addon module.
  */
 
@@ -107,7 +107,7 @@ void MonitorStats(ecs_iter_t *it) {
             /* Still in same interval, combine with last measurement */
             ctx->api.reduce_last(stats, last, hdr->reduce_count);
         } else if (dif > 1) {
-            /* More than 16ms has passed, backfill */
+            /* More than one interval has passed, backfill */
             for (i = 1; i < dif; i ++) {
                 ctx->api.repeat_last(stats);
             }
@@ -220,7 +220,7 @@ void AggregateStats(ecs_iter_t *it) {
         }
     } while (true);
 
-    /* A day has 60 24 minute intervals */
+    /* A day has 24 60-minute intervals */
     dst_hdr->reduce_count ++;
     if (dst_hdr->reduce_count >= interval) {
         dst_hdr->reduce_count = 0;
@@ -330,7 +330,7 @@ void flecs_stats_api_import(
         });
     }
 
-    // Called each minute, reduces into 60 measurements per day
+    // Called each minute, reduces into 24 measurements per day
     {
         ecs_aggregate_stats_ctx_t *ctx = ecs_os_calloc_t(ecs_aggregate_stats_ctx_t);
         ctx->api = *api;
@@ -353,7 +353,7 @@ void flecs_stats_api_import(
         });
     }
 
-    // Called each hour, reduces into 60 measurements per week
+    // Called each hour, reduces into 168 measurements per week
     {
         ecs_aggregate_stats_ctx_t *ctx = ecs_os_calloc_t(ecs_aggregate_stats_ctx_t);
         ctx->api = *api;
@@ -393,14 +393,6 @@ void FlecsStatsImport(
     ECS_IMPORT(world, FlecsTimer);
 #ifdef FLECS_META
     ECS_IMPORT(world, FlecsMeta);
-#endif
-#ifdef FLECS_UNITS
-    ECS_IMPORT(world, FlecsUnits);
-#endif
-#ifdef FLECS_DOC
-    ECS_IMPORT(world, FlecsDoc);
-    ecs_doc_set_brief(world, ecs_id(FlecsStats), 
-        "Module that automatically monitors statistics for the world & systems");
 #endif
 
     ecs_set_name_prefix(world, "Ecs");
